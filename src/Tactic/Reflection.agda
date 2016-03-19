@@ -91,3 +91,18 @@ evalTC {A = A} c hole =
 macro
   evalT : ∀ {a} {A : Set a} → TC A → Tactic
   evalT = evalTC
+
+open import Container.Traversable
+
+{-# TERMINATING #-}
+blockOnMeat : Type → TC ⊤
+blockOnMeat (var x args) = (traverse blockOnMeat $ unArg <$> args) >> pure tt
+blockOnMeat (con c args) = (traverse blockOnMeat $ unArg <$> args) >> pure tt
+blockOnMeat (def f args) = (traverse blockOnMeat $ unArg <$> args) >> pure tt
+blockOnMeat (lam v t) = (traverse blockOnMeat t) >> pure tt
+blockOnMeat (pat-lam cs args) = pure tt -- TODO
+blockOnMeat (pi a b) = traverse blockOnMeat a >> traverse blockOnMeat b >> pure tt
+blockOnMeat (agda-sort s) = pure tt -- TODO
+blockOnMeat (lit l) = return tt
+blockOnMeat (meta x x₁) = blockOnMeta x
+blockOnMeat unknown = return tt
