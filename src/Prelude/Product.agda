@@ -11,6 +11,9 @@ infixr 1 _,_
 data Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
   _,_ : (x : A) (y : B x) → Σ A B
 
+∃ : ∀ {a b} {A : Set a} (B : A → Set b) → Set (a ⊔ b)
+∃ = Σ _
+   
 instance
   ipair : ∀ {a b} {A : Set a} {B : A → Set b} {{x : A}} {{y : B x}} → Σ A B
   ipair {{x}} {{y}} = x , y
