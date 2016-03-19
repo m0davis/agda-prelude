@@ -226,19 +226,12 @@ module Tactic.Reflection.Reright where
             Γʰ' : Maybe (List (Arg Type))
             Γʰ' = _++_ <$> subsetList Γᶜ [iᶜ∣iᶜ∉FVᴬ] <*> subsetList Γᶜ [iᶜ∣iᶜ∈FVᴬ]
      
-    inferGoal : Term → TC Type
-    inferGoal hole = unPi =<< forceFun =<< inferType hole where
-      unPi : Type → TC Type
-      unPi (pi _ (abs _ (meta x _))) = blockOnMeta! x
-      unPi (pi _ (abs _ b)) = maybe (typeError (strErr "error strengthening" ∷ termErr b ∷ [])) pure $ strengthen 1 b
-      unPi x = typeError (strErr "goal is not a pi type" ∷ termErr x ∷ [])
-
     getRequest : Term → Term → TC Request
     getRequest l≡r hole = do
       L≡R ← inferType l≡r -|
       L≡R-matched ← maybe (typeError (strErr "not an equality" ∷ termErr l≡r ∷ termErr L≡R ∷ [])) pure $
         match 3 (def (quote _≡_) (hArg unknown ∷ (hArg (var₀ 0)) ∷ (vArg (var₀ 1)) ∷ (vArg (var₀ 2)) ∷ [])) L≡R -|
-      𝐺 ← inferGoal hole -|
+      𝐺 ← inferFunRange hole -|
       Γᶜ ← getContext -|
       case L≡R-matched of λ { (A ∷ L ∷ R ∷ []) →
         pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γᶜ = Γᶜ ; 𝐺 = 𝐺 } }
