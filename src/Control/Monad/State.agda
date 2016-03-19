@@ -51,6 +51,9 @@ module _ {a} {S : Set a} {M : Set a → Set a} where
     put : S → StateT S M S
     put s = modify (const s)
 
+    evalStateT : {A : Set a} → StateT S M A → S → M A
+    evalStateT x s = runStateT x s >>= return ∘ fst
+
 module _ {a} {S : Set a} {M N : Set a → Set a} {{_ : Monad M}} {{_ : Monad N}} where
   mapStateT : ∀ {A B : Set a} → (M (A × S) -> N (B × S)) → StateT S M A -> StateT S N B
   mapStateT f m = stateT $ f ∘ runStateT m
