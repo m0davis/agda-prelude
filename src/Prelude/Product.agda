@@ -6,6 +6,7 @@ open import Prelude.Function
 open import Prelude.Equality
 open import Prelude.Decidable
 open import Prelude.Ord
+open import Prelude.Empty
 
 infixr 1 _,_
 data Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
@@ -13,7 +14,10 @@ data Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
 
 ∃ : ∀ {a b} {A : Set a} (B : A → Set b) → Set (a ⊔ b)
 ∃ = Σ _
-   
+
+∄ : ∀ {a b} {A : Set a} (B : A → Set b) → Set (a ⊔ b)
+∄ b = ∃ b → ⊥
+
 instance
   ipair : ∀ {a b} {A : Set a} {B : A → Set b} {{x : A}} {{y : B x}} → Σ A B
   ipair {{x}} {{y}} = x , y
