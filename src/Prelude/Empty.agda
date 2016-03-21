@@ -16,7 +16,7 @@ private postulate erasedBottom : ⊥
 erase-⊥ : ⊥ → ⊥
 erase-⊥ _ = erasedBottom
 
-infix 4 ¬_
+infix 3 ¬_
 ¬_ : ∀ {a} (A : Set a) → Set a
 ¬ A = A → ⊥
 
