@@ -121,11 +121,20 @@ module Tactic.Reflection.Reright where
 
       module _ where
         private
+          --Lʷ : Term
           Lʷ = reorderVars [iʷ] L
 
-        Γʷ = caseF Γʷ' of _R[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ] where
+        --Γʷ : Maybe (List (Arg Type))
+        -- Γʷ = caseF Γʷ' of _R[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ] where
+        Γʷ = _R[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ] <$> Γʷ' where
           Γʷ' : Maybe (List (Arg Type))
-          Γʷ' = _++_ <$> Γʷ/⁻ᴬ <*> (_∷_ <$> (strengthen (length [iᶜ∣iᶜ∉FVᴬ] + 1) $ hArg (reorderVars [iʷ] A)) <*> Γʷ/ᴬ) where
+          Γʷ' = _++_ <$> Γʷ/⁻ᴬ
+--                         <*> (_∷_ <$> (strengthen (length [iᶜ∣iᶜ∉FVᴬ] + 1) $ hArg $ reorderVars [iʷ] A)
+                         <*> (_∷_ <$> (strengthen (suc (length [iᶜ∣iᶜ∉FVᴬ])) $ hArg $ reorderVars [iʷ] A)
+--                         <*> (_∷_ <$> (strengthen (suc $ length [iᶜ∣iᶜ∉FVᴬ]) $ hArg $ reorderVars [iʷ] A)
+                                       <*>
+                                       Γʷ/ᴬ
+                             )
 
         𝐺ʷ = reorderVars [iʷ] 𝐺 r[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ]
 
@@ -146,15 +155,23 @@ module Tactic.Reflection.Reright where
           𝐺ʷʳ = 𝐺ʷ r[ Rʷ / var₀ (length [iᶜ∣iᶜ∉FVᴬ]) ]
 
         helper-type : Maybe Type
-        helper-type = telPi <$> (_++_ <$> (reverse <$> Γʷ) <*> (_∷_ <$> (pure $ vArg (def₂ (quote _≡_) (var₀ (length [iᶜ∣iᶜ∉FVᴬ])) Rʷ)) <*> ([_] ∘ vArg <$> (weaken 1 <$> gʳ)))) <*> pure (weaken 2 𝐺ʷ)
+        helper-type = telPi <$> (_++_ <$> (reverse <$> Γʷ)
+                                          <*>
+                                          (_∷_ <$> (pure $ vArg (def₂ (quote _≡_) (var₀ (length [iᶜ∣iᶜ∉FVᴬ])) Rʷ))
+                                                   <*>
+                                                   ([_] ∘ vArg <$> (weaken 1 <$> gʳ))
+                                          )
+                                )
+                                <*>
+                                pure (weaken 2 𝐺ʷ)
 
       make-vars-from-args : List Nat → List (Arg Type) → Maybe (List (Arg Type))
       make-vars-from-args [] [] = pure []
       make-vars-from-args (i ∷ is) (x ∷ xs) = _∷_ <$> pure (var₀ i <$ x) <*> make-vars-from-args is xs
       make-vars-from-args _ _ = nothing
 
-      defineHelper : Name → TC ⊤
-      defineHelper n =
+      defineHelper : Bool → Name → TC ⊤
+      defineHelper debug n =
         maybe (typeError ( strErr "error constructing helper function type, patterns, or term" ∷
                            strErr "\nhelper-type:" ∷ termErr (maybe unknown id helper-type) ∷
                            strErr "\n`helper-type:" ∷ termErr (` helper-type) ∷
@@ -177,7 +194,9 @@ module Tactic.Reflection.Reright where
                            [] ))
               (λ {(helper-type , helper-patterns , helper-term) →
                 catchTC
-                  (define (vArg n) helper-type [ clause helper-patterns helper-term ])
+                  (define (vArg n) helper-type [ clause helper-patterns helper-term ] ~|
+                   if debug then typeError [] else return tt
+                   )
                   (typeError ( strErr "error defining helper function" ∷
                                strErr "\nhelper-type:" ∷ termErr helper-type ∷
                                strErr "\n`helper-type:" ∷ termErr (` helper-type) ∷
@@ -244,10 +263,18 @@ module Tactic.Reflection.Reright where
         pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γᶜ = Γᶜ ; 𝐺 = 𝐺 } }
 
   macro
-    reright : Term → Tactic
-    reright l≡r hole =
+    reright : Nat → Term → Tactic
+    reright ignored l≡r hole =
       q ← getRequest l≡r hole -|
       n ← freshName "reright" -|
       let open Request q in
-      defineHelper n ~|
+      defineHelper false n ~|
       callHelper n hole
+
+    reright' : Nat → Term → Tactic
+    reright' ignored l≡r hole =
+      q ← getRequest l≡r hole -|
+      n ← freshName "reright" -|
+--      let open Request q in
+      Request.defineHelper q true n ~|
+      Request.callHelper q n hole

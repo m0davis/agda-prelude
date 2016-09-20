@@ -5,8 +5,9 @@ module Tactic.Reflection.Replace where
 
   open import Tactic.Reflection
   open import Tactic.Reflection.Equality
-  
+
   {-# TERMINATING #-}
+  -- p r[ r / l ] = replace l with r in p
   _r[_/_] : Term → Term → Term → Term
   p r[ r / l ] =
     ifYes p == l
@@ -40,8 +41,10 @@ module Tactic.Reflection.Replace where
       _r₂[_/_] : {T₀ T₁ : Set → Set} {{_ : Functor T₀}} {{_ : Traversable T₀}} {{_ : Functor T₁}} {{_ : Traversable T₁}} → T₁ (T₀ Term) → Term → Term → T₁ (T₀ Term)
       p r₂[ r / l ] = fmap _r[ r / l ] <$> p
 
+  -- Γ R[ L / R ] = replace L with R in Γ
   _R[_/_] : List (Arg Type) → Type → Type → List (Arg Type)
   Γ R[ L / R ] = go Γ (strengthen 1 L) (strengthen 1 R) where
     go : List (Arg Type) → Maybe Term → Maybe Term → List (Arg Type)
-    go (γ ∷ Γ) (just L) (just R) = (caseF γ of _r[ L / R ]) ∷ go Γ (strengthen 1 L) (strengthen 1 R)
+    --go (γ ∷ Γ) (just L) (just R) = (caseF γ of _r[ L / R ]) ∷ go Γ (strengthen 1 L) (strengthen 1 R)
+    go (γ ∷ Γ) (just L) (just R) = (_r[ L / R ] <$> γ) ∷ go Γ (strengthen 1 L) (strengthen 1 R)
     go Γ _ _ = Γ
