@@ -3,7 +3,7 @@ module Numeric.Nat.DivMod where
 
 open import Prelude
 open import Control.WellFounded
-open import Tactic.Nat.Prelude
+open import Tactic.Nat
 open import Tactic.Nat.Reflect
 open import Tactic.Nat.Exp
 open import Numeric.Nat.Properties
@@ -116,7 +116,6 @@ rem-unique d₁ d₂ = snd (divmod-unique d₁ d₂)
 
 instance
   ShowDivMod : ∀ {a b} → Show (DivMod a b)
-  ShowDivMod {a} {b} =
-    record { showsPrec = λ { p (qr q r _ _) →
+  showsPrec {{ShowDivMod {a} {b}}} p (qr q r _ _) =
       showParen (p >? 0) $ shows a ∘ showString " == "
-                         ∘ shows q ∘ showString " * " ∘ shows b ∘ showString " + " ∘ shows r } }
+                         ∘ shows q ∘ showString " * " ∘ shows b ∘ showString " + " ∘ shows r

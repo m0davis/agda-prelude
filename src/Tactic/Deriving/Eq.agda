@@ -127,16 +127,16 @@ private
   unify s            t            | yes _ = pure (positive [])
   unify (var x [])   (var y [])   | no  _ =
     if (x <? y) -- In var-var case, instantiate the one that is bound the closest to us.
-    then pure $ positive ((x , var y []) ∷ [])
-    else pure $ positive ((y , var x []) ∷ [])
+    then pure (positive ((x , var y []) ∷ []))
+    else pure (positive ((y , var x []) ∷ []))
   unify (var x [])   t            | no  _ =
     if (elem x (freeVars t))
     then failure "cyclic occurrence" -- We don't currently know if the occurrence is rigid or not
-    else pure $ positive ((x , t) ∷ [])
+    else pure (positive ((x , t) ∷ []))
   unify t            (var x [])   | no  _ =
     if (elem x (freeVars t))
     then failure "cyclic occurrence"
-    else pure $ positive ((x , t) ∷ [])
+    else pure (positive ((x , t) ∷ []))
   unify (con c₁ xs₁) (con c₂ xs₂) | no  _ =
     if (isYes (c₁ == c₂))
     then unifyArgs xs₁ xs₂
@@ -183,16 +183,12 @@ private
 
   instance
     DeBruijnForced : DeBruijn Forced
-    DeBruijnForced = record
-      { strengthenFrom = λ _ _ → just
-      ; weakenFrom     = λ _ _ → id
-      }
+    strengthenFrom {{DeBruijnForced}} _ _ = just
+    weakenFrom     {{DeBruijnForced}} _ _ = id
 
     DeBruijnProd : {A B : Set} {{_ : DeBruijn A}} {{_ : DeBruijn B}} → DeBruijn (A × B)
-    DeBruijnProd = record
-      { strengthenFrom = λ { m n (x , y) → _,_ <$> (strengthenFrom m n x) <*> (strengthenFrom m n y) }
-      ; weakenFrom     = λ { m n (x , y) → weakenFrom m n x , weakenFrom m n y }
-      }
+    strengthenFrom {{DeBruijnProd}} m n (x , y) = ⦇ strengthenFrom m n x , strengthenFrom m n y ⦈
+    weakenFrom     {{DeBruijnProd}} m n (x , y) = weakenFrom m n x , weakenFrom m n y
 
   RemainingArgs : Nat → Set
   RemainingArgs = Vec (Arg (Forced × Term × Term))
@@ -256,21 +252,24 @@ private
     where
       remainingFree = countFree args
 
+      wk : {A : Set} {{_ : DeBruijn A}} → Nat → A → A
+      wk k = weaken (k + remainingFree)
+
       checkEqArgsYes : Term
       checkEqArgsYes =
         def (quote transport) (
           (vArg (vLam "x" (nPi (rightArgsFree args) (def₁ (quote Dec)
-            (weaken (2 + remainingFree)
+            (wk 2
                (con c (xs ++ arg i y ∷ (leftArgs args)))
              `≡
-             con c (weaken (2 + remainingFree) xs ++
+             con c (wk 2 xs ++
                     arg i (var remainingFree []) ∷
-                    rightArgs (refreshArgs (weaken (2 + remainingFree) args)))))))) ∷
+                    rightArgs (refreshArgs (wk 2 args)))))))) ∷
           (vArg (var 0 [])) ∷
           (vArg (nLam (rightArgsFree args)
             (checkEqArgs c
-              (weaken (1 + remainingFree) (xs ++ [ arg i y ]))
-              (refreshArgs (weaken (1 + remainingFree) args))))) ∷
+              (wk 1 (xs ++ [ arg i y ]))
+              (refreshArgs (wk 1 args))))) ∷
           weaken 1 (rightArgsFree args))
 
       checkEqArgsNo : Term
@@ -278,11 +277,11 @@ private
         con₁ (quote no) (vLam "eq" (var 1 (vArg (def₃ (quote _∋_)
           (nPi (hideTel (arg i z ∷ rightArgsFree args))
             (weaken (3 + remainingFree) (con c (xs ++ arg i y ∷ leftArgs args))
-              `≡ con c (weaken (3 + remainingFree) xs ++
+              `≡ con c (wk 3 xs ++
                         arg i (var remainingFree []) ∷
-                        rightArgs (refreshArgs (weaken (3 + remainingFree) args)))
+                        rightArgs (refreshArgs (wk 3 args)))
             `→
-             weaken (4 + remainingFree) y `≡ var (1 + remainingFree) []))
+             wk 4 y `≡ var (1 + remainingFree) []))
           (pat-lam (clause
             (replicate (1 + remainingFree) (hArg dot) ++ vArg `refl ∷ [])
             `refl ∷ []) [])
@@ -295,11 +294,11 @@ private
     caseM classifyArgs c of λ { (_ , args) →
     do paramPats ← map (fmap λ _ → var "A") ∘ hideTel <$> params c
     -| params    ← makeParams args
-    -| pure $
-         clause (paramPats ++
-                 vArg (con c (makeLeftPattern args)) ∷
-                 vArg (con c (makeRightPattern args)) ∷ [])
-                (checkEqArgs c params args) }
+    -| pure
+         (clause (paramPats ++
+                  vArg (con c (makeLeftPattern args)) ∷
+                  vArg (con c (makeRightPattern args)) ∷ [])
+                 (checkEqArgs c params args)) }
     where
       args = classifyArgs c
 
@@ -328,9 +327,9 @@ private
     -| args₂ ← argsTel c₂
     -| #args₁ := length args₁
     -| #args₂ := length args₂
-    -| pure $ clause (vArg (con c₁ (makePattern (#args₁ + #args₂ - 1) args₁)) ∷
-                      vArg (con c₂ (makePattern (#args₂ - 1) args₂)) ∷ [])
-                     (con (quote no) ([ vArg (pat-lam ([ absurd-clause ([ vArg absurd ]) ]) []) ]))
+    -| pure (clause (vArg (con c₁ (makePattern (#args₁ + #args₂ - 1) args₁)) ∷
+                     vArg (con c₂ (makePattern (#args₂ - 1) args₂)) ∷ [])
+                    (con (quote no) ([ vArg (pat-lam ([ absurd-clause ([ vArg absurd ]) ]) []) ])))
     where
       makePattern : (k : Nat) (args : List (Arg Type)) → List (Arg Pattern)
       makePattern k [] = []

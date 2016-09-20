@@ -59,7 +59,7 @@ private
 
 instance
   EqLeaf : Eq Leaf
-  EqLeaf = record { _==_ = eq-leaf }
+  _==_ {{EqLeaf}} = eq-leaf
 
 private
   eq-tree  : (x y : TreeRep) → Dec (x ≡ y)
@@ -77,7 +77,7 @@ private
 
 instance
   EqTree : Eq TreeRep
-  EqTree = record { _==_ = eq-tree }
+  _==_ {{EqTree}} = eq-tree
 
 --- Ord instance ---
 
@@ -169,7 +169,7 @@ module _ {a} {A : Set a} {{_ : TreeEncoding A}} where
     decTreeEq x y | no !eq = no λ x=y → !eq (cong treeEncode x=y)
 
   EqByTreeEncoding : Eq A
-  EqByTreeEncoding = record { _==_ = decTreeEq }
+  _==_ {{EqByTreeEncoding}} = decTreeEq
 
   data LessEncoding (x y : A) : Set a where
     less-enc : treeEncode x < treeEncode y → LessEncoding x y

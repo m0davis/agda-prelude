@@ -19,17 +19,13 @@ open Builtin public
 
 instance
   ShowName : Show Name
-  ShowName = record { showsPrec = λ _ x → showString (primShowQName x) }
-
-private
-  eqName : (x y : Name) → Dec (x ≡ y)
-  eqName x y with primQNameEquality x y
-  ... | true  = yes unsafeEqual
-  ... | false = no  unsafeNotEqual
+  showsPrec {{ShowName}} _ x = showString (primShowQName x)
 
 instance
   EqName : Eq Name
-  EqName = record { _==_ = eqName }
+  _==_ {{EqName}} x y with primQNameEquality x y
+  ... | true  = yes unsafeEqual
+  ... | false = no unsafeNotEqual
 
 data LessName (x y : Name) : Set where
   less-name : primQNameLess x y ≡ true → LessName x y
@@ -52,15 +48,11 @@ instance
   ShowMeta : Show Meta
   showsPrec {{ShowMeta}} _ x = showString (primShowMeta x)
 
-private
-  eqMeta : (x y : Meta) → Dec (x ≡ y)
-  eqMeta x y with primMetaEquality x y
-  ... | true  = yes unsafeEqual
-  ... | false = no  unsafeNotEqual
-
 instance
   EqMeta : Eq Meta
-  EqMeta = record { _==_ = eqMeta }
+  _==_ {{EqMeta}} x y with primMetaEquality x y
+  ... | true  = yes unsafeEqual
+  ... | false = no  unsafeNotEqual
 
 data LessMeta (x y : Meta) : Set where
   less-name : primMetaLess x y ≡ true → LessMeta x y
@@ -86,22 +78,35 @@ pattern iArg x = arg (arg-info instance′ relevant) x
 unArg : ∀ {A} → Arg A → A
 unArg (arg _ x) = x
 
+getArgInfo : ∀ {A} → Arg A → ArgInfo
+getArgInfo (arg i _) = i
+
+getVisibility : ∀ {A} → Arg A → Visibility
+getVisibility (arg (arg-info v _) _) = v
+
+getRelevance : ∀ {A} → Arg A → Relevance
+getRelevance (arg (arg-info _ r) _) = r
+
+isVisible : ∀ {A} → Arg A → Bool
+isVisible (arg (arg-info visible _) _) = true
+isVisible _ = false
+
 instance
   FunctorArg : Functor Arg
-  FunctorArg = record { fmap = λ { f (arg i x) → arg i (f x) } }
+  fmap {{FunctorArg}} f (arg i x) = arg i (f x)
 
   TraversableArg : Traversable Arg
-  TraversableArg = record { traverse = λ { f (arg i x) → pure (arg i) <*> f x } }
+  traverse {{TraversableArg}} f (arg i x) = ⦇ (arg i) (f x) ⦈
 
 unAbs : ∀ {A} → Abs A → A
 unAbs (abs _ x) = x
 
 instance
   FunctorAbs : Functor Abs
-  FunctorAbs = record { fmap = λ { f (abs s x) → abs s (f x) } }
+  fmap {{FunctorAbs}} f (abs s x) = abs s (f x)
 
   TraversableAbs : Traversable Abs
-  TraversableAbs = record { traverse = λ { f (abs s x) → pure (abs s) <*> f x } }
+  traverse {{TraversableAbs}} f (abs s x) = ⦇ (abs s) (f x) ⦈
 
 absurd-lam : Term
 absurd-lam = pat-lam (absurd-clause (vArg absurd ∷ []) ∷ []) []
@@ -113,14 +118,20 @@ instance
   return {{MonadTC}} = returnTC
   _>>=_  {{MonadTC}} = bindTC
 
+  MonadTC′ : ∀ {a b} → Monad′ {a} {b} TC
+  _>>=′_ {{MonadTC′}} = bindTC
+
   ApplicativeTC : ∀ {a} → Applicative {a} TC
   ApplicativeTC = defaultMonadApplicative
+
+  ApplicativeTC′ : ∀ {a b} → Applicative′ {a} {b} TC
+  _<*>′_ {{ApplicativeTC′}} mf mx = mf >>=′ λ f → mx >>=′ λ x → return (f x)
 
   FunctorTC : ∀ {a} → Functor {a} TC
   FunctorTC = defaultMonadFunctor
 
-  MonadTC′ : ∀ {a b} → Monad′ {a} {b} TC
-  _>>=′_ {{MonadTC′}} = bindTC
+  FunctorTC′ : ∀ {a b} → Functor′ {a} {b} TC
+  fmap′ {{FunctorTC′}} f m = pure f <*>′ m
 
   AlternativeTC : ∀ {a} → Alternative {a} TC
   empty {{AlternativeTC}} = typeError []
@@ -136,6 +147,9 @@ define f a cs = declareDef f a >> defineFun (unArg f) cs
 
 newMeta : Type → TC Term
 newMeta = checkType unknown
+
+newMeta! : TC Term
+newMeta! = newMeta unknown
 
 typeErrorS : ∀ {a} {A : Set a} → String → TC A
 typeErrorS s = typeError (strErr s ∷ [])

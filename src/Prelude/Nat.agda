@@ -12,18 +12,14 @@ open import Prelude.Ord
 open import Prelude.Number
 open import Prelude.Semiring
 
-import Agda.Builtin.Nat as Builtin
-
-open Builtin public
-  hiding   ( _+_; _*_; _-_ )
-  renaming ( _==_       to eqNat
+open import Agda.Builtin.Nat public
+  renaming ( _+_        to _+N_
+           ; _*_        to _*N_
+           ; _-_        to _-N_
+           ; _==_       to eqNat
            ; _<_        to lessNat
            ; div-helper to divAux
            ; mod-helper to modAux )
-
--- Trickery to make the display forms work.
-private module NatOps = Builtin
-open NatOps public using () renaming ( _+_ to _+N_; _*_ to _*N_; _-_ to _-N_ )
 
 {-# DISPLAY _+N_ = _+_ #-}
 {-# DISPLAY _-N_ = _-_ #-}
@@ -37,11 +33,14 @@ instance
   Number.fromNat    NumberNat n = n
 
   SemiringNat : Semiring Nat
-  SemiringNat = record { zro = zero ; one = suc zero
-                       ; _+_ = _+N_ ; _*_ = _*N_ }
+  zro {{SemiringNat}} = 0
+  one {{SemiringNat}} = 1
+  _+_ {{SemiringNat}} = _+N_
+  _*_ {{SemiringNat}} = _*N_
 
   SubtractiveNat : Subtractive Nat
-  SubtractiveNat = record { _-_ = _-N_ ; negate = λ _ → 0 }
+  _-_    {{SubtractiveNat}}   = _-N_
+  negate {{SubtractiveNat}} _ = 0
 
 --- Equality ---
 
@@ -73,10 +72,11 @@ private
 
 instance
   EqNat : Eq Nat
-  EqNat = record { _==_ = decEqNat }
+  _==_ {{EqNat}} = decEqNat
 
 --- Division and modulo ---
 
+infixl 7 natDiv natMod
 syntax natDiv m n = n div m
 natDiv : (m : Nat) {{nz : NonZero m}} → Nat → Nat
 natDiv zero {{}} n

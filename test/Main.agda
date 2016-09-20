@@ -1,4 +1,6 @@
 
+import Everything
+
 open import Prelude
 open import Container.Traversable
 open import Container.Foldable
@@ -19,7 +21,7 @@ open import Tactic.Reflection.Free
 open import Tactic.Reflection.Quote
 open import Tactic.Reflection.Telescope
 open import Tactic.Deriving.Eq
-open import Tactic.Nat.Prelude
+open import Tactic.Nat
 
 open import Numeric.Nat.DivMod
 open import Numeric.Nat.Divide
@@ -51,10 +53,10 @@ main = _ <$ (runStateT (mapM putStrI (Hello ∷ World ∷ " " ∷ [])) 0 >>
              putStrLn "")
 
 downFrom : Nat → List Nat
-downFrom  zero   = []
+downFrom zero    = []
 downFrom (suc n) = suc n ∷ downFrom n
 
-thm : ∀ n → 6 * sum (map (_^ 2) (downFrom n)) ≡ n * (n + 1) * (2 * n + 1)
+thm : ∀ n → 6 * sumR (map (_^ 2) (downFrom n)) ≡ n * (n + 1) * (2 * n + 1)
 thm = induction
 
 thm₂ : (a b : Nat) → (a - b) * (a + b) ≡ a ^ 2 - b ^ 2

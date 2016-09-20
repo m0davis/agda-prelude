@@ -1,77 +1,57 @@
-open import Agda.Builtin.Reflection using (Name)
-module Tactic.Nat (`_≤ₐ_ `≤ₐ→≤₀ `≤₀→≤ₐ : Name) where
+
+module Tactic.Nat where
 
 open import Prelude
-open import Tactic.Reflection
-open import Tactic.Nat.Induction using (nat-induction)
-open import Tactic.Nat.Subtract using (autosub-tactic; by-tactic; refutesub-tactic; simplifygoal-tactic; simplifysub-tactic)
+open import Tactic.Nat.Generic (quote _≤_) (quote id) (quote id) public
 
-private
-  a→0 : Type → Term
-  a→0 (def operator _) = ifYes operator == `_≤ₐ_ then def₀ `≤ₐ→≤₀ else def₀ (quote id)
-  a→0 _ = def₀ (quote id) -- TODO perhaps return unknown?
+{-
 
-  0→a : Type → Term
-  0→a (def operator _) = ifYes operator == `_≤ₐ_ then def₀ `≤₀→≤ₐ else def₀ (quote id)
-  0→a _ = def₀ (quote id) -- TODO perhaps return unknown?
+All tactics know about addition, multiplication and subtraction
+of natural numbers, and can prove equalities and inequalities (_<_).
+The available tactics are:
 
-macro
-  auto : Tactic
-  auto holeₐ = do
-    goalₐ ← inferType holeₐ -|
-    hole₀ := a→0 goalₐ `$ holeₐ -|
-    (holeₐ =′_) ∘ (0→a goalₐ `$_) =<< autosub-tactic =<< inferType =<< normalise hole₀
- 
-  by : Term → Tactic
-  by prfₐ holeₐ = do
-    goalₐ ← inferType holeₐ -|
-    hole₀ := a→0 goalₐ `$ holeₐ -|
-    Prfₐ ← inferType prfₐ -|
-    prf₀ := a→0 Prfₐ `$ prfₐ -|
-    (holeₐ =′_) ∘ (0→a goalₐ `$_) =<< by-tactic prf₀ =<< inferType =<< normalise hole₀
- 
-  refute : Term → Tactic
-  refute prfₐ holeₐ = do
-    Prfₐ ← inferType prfₐ -|
-    prf₀ := a→0 Prfₐ `$ prfₐ -|
-    (holeₐ =′_) =<< refutesub-tactic prf₀
- 
-  simplify-goal : Tactic
-  simplify-goal holeₐ = do
-    goalₐ ← inferFunRange holeₐ -|
-    s-goal₀ ← simplifygoal-tactic =<< inferFunRange (a→0 goalₐ `∘ holeₐ) -|
-    holeₐ =′ 0→a goalₐ `∘ s-goal₀ `∘ a→0 goalₐ
- 
-  simplify : Term → Tactic 
-  simplify prfₐ holeₐ =
-    goalₐ ← inferFunRange holeₐ -|
-    Prfₐ ← inferType prfₐ -|
-    prf₀ := a→0 Prfₐ `$ prfₐ -|
-    s-goal₀ ← simplifysub-tactic prf₀ =<< inferFunRange (a→0 goalₐ `∘ holeₐ) -|
-    holeₐ =′ (`λ $ 0→a goalₐ `$ weaken 1 s-goal₀ `$ `λ $ a→0 goalₐ `$ var₁ 1 (0→a Prfₐ `$ var₀ 0))
- 
-  induction : Tactic
-  induction holeₐ = do
-    goalₐ ← caseM inferType holeₐ of (λ
-    { (pi _ (abs _ t)) → pure t
-    ; (meta x _) → blockOnMeta x
-    ; _ → typeErrorS "Induction tactic must be applied to a function goal"
-    }) -|
-    hole₀ ← (a→0 goalₐ `∘ holeₐ) :′ unknown -|
-    caseM inferType hole₀ of λ
-    { (pi a b)   →
-        let P = lam visible b
-            inStepCxt : {A : Set} → TC A → TC A
-            inStepCxt {_} = λ′ (vArg (quoteTerm Nat)) ∘
-                            λ′ (vArg unknown) in
-        do base ← unknown :′ unknown -|
-           step ← inStepCxt $ unknown :′ unknown -|
-           holeₐ =′ 0→a goalₐ `∘ def₃ (quote nat-induction)
-                                      P
-                                      base
-                                      (`λ $ `λ step) ~|
-           base =′_ =<< autosub-tactic =<< inferType base ~|
-           inStepCxt (step =′_ =<< by-tactic (var₀ 0) =<< inferType step)
-    ; (meta x _) → blockOnMeta x
-    ; _          → typeErrorS "Induction tactic must be applied to a function goal"
-    }
+  * auto
+
+    Prove an equation or inequality.
+
+  * by eq
+
+    Prove the goal using the given assumption. For equalities it simplifies
+    the goal and the assumption and checks if they match any of the following
+    forms (up to symmetry):
+
+          a ≡ b → a ≡ b
+      a + b ≡ 0 → a ≡ 0
+
+    For inequalities, to prove a < b -> c < d, it simplifies the assumption and
+    goal and then tries to prove c′ ≤ a′ and b′ ≤ d′.
+
+    When proving that an inequality follows from an equality a ≡ b, the equality
+    is weakened to a ≤ b before applying the above procedure.
+
+    Proving an equality from an inequality works if the inequality simplifies to
+    a ≤ 0 (or a < 0 in which case it's trivial). It then reduces that to a ≡ 0
+    and tries to prove the goal from that.
+
+  * refute eq
+
+    Proves an arbitrary proposition given a false equation. Works for equations
+    that simplify to 0 ≡ suc n (or symmetric) or n < 0, for some n.
+
+  * simplify-goal ?
+
+    Simplify the current goal and let you keep working on the new goal.
+    In most cases 'by prf' works better than
+    'simplify-goal prf' since it will also simplify prf. The advantage
+    of simplify-goal is that it allows holes in prf.
+
+  * simplify eq λ x → ?
+
+    Simplify the given equation (and the current goal) and bind the simplified
+    equation to x in the new goal.
+
+  * induction
+
+    Prove a goal ∀ n → P n using induction. Applies 'auto' in the base case
+    and 'by IH' in the step case.
+-}

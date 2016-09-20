@@ -7,11 +7,12 @@ open import Builtin.Reflection
 open import Control.Monad.State
 open import Tactic.Reflection.Quote
 open import Tactic.Reflection.DeBruijn
+open import Tactic.Reflection.Equality
 
 open import Tactic.Nat.Reflect
 open import Tactic.Nat.Subtract.Exp
 
-⟨suc⟩s : SubExp → SubExp
+⟨suc⟩s : SubExp →  SubExp
 ⟨suc⟩s (lit n) = lit (suc n)
 ⟨suc⟩s (lit n ⟨+⟩ e) = lit (suc n) ⟨+⟩ e
 ⟨suc⟩s e = lit 1 ⟨+⟩ e
@@ -76,18 +77,12 @@ termToSubHyps t = runR (termToSubHypsR t)
 
 instance
   QuotableSubExp : Quotable SubExp
-  QuotableSubExp = record { ` = quoteSubExp }
-    where
-      quoteSubExp : SubExp → Term
-      quoteSubExp (var x) = con (quote SubExp.var) (vArg (` x) ∷ [])
-      quoteSubExp (lit n) = con (quote SubExp.lit) (vArg (` n) ∷ [])
-      quoteSubExp (e ⟨+⟩ e₁) = con (quote SubExp._⟨+⟩_) (map defaultArg $ quoteSubExp e ∷ quoteSubExp e₁ ∷ [])
-      quoteSubExp (e ⟨-⟩ e₁) = con (quote SubExp._⟨-⟩_) (map defaultArg $ quoteSubExp e ∷ quoteSubExp e₁ ∷ [])
-      quoteSubExp (e ⟨*⟩ e₁) = con (quote SubExp._⟨*⟩_) (map defaultArg $ quoteSubExp e ∷ quoteSubExp e₁ ∷ [])
+  ` {{QuotableSubExp}} (var x) = con (quote SubExp.var) (vArg (` x) ∷ [])
+  ` {{QuotableSubExp}} (lit n) = con (quote SubExp.lit) (vArg (` n) ∷ [])
+  ` {{QuotableSubExp}} (e ⟨+⟩ e₁) = con (quote SubExp._⟨+⟩_) (map defaultArg $ ` e ∷ ` e₁ ∷ [])
+  ` {{QuotableSubExp}} (e ⟨-⟩ e₁) = con (quote SubExp._⟨-⟩_) (map defaultArg $ ` e ∷ ` e₁ ∷ [])
+  ` {{QuotableSubExp}} (e ⟨*⟩ e₁) = con (quote SubExp._⟨*⟩_) (map defaultArg $ ` e ∷ ` e₁ ∷ [])
 
   QuotableEqn : Quotable Eqn
-  QuotableEqn = record { ` = quoteEqn }
-    where
-      quoteEqn : Eqn → Term
-      quoteEqn (a :≡ b) = con (quote _:≡_) (vArg (` a) ∷ vArg (` b) ∷ [])
-      quoteEqn (a :< b) = con (quote _:<_) (vArg (` a) ∷ vArg (` b) ∷ [])
+  ` {{QuotableEqn}} (a :≡ b) = con (quote _:≡_) (vArg (` a) ∷ vArg (` b) ∷ [])
+  ` {{QuotableEqn}} (a :< b) = con (quote _:<_) (vArg (` a) ∷ vArg (` b) ∷ [])

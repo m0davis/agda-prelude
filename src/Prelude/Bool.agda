@@ -13,6 +13,7 @@ infix 0 if_then_else_
 if_then_else_ : ∀ {a} {A : Set a} → Bool → A → A → A
 if true  then x else y = x
 if false then x else y = y
+{-# INLINE if_then_else_ #-}
 
 infixr 3 _&&_
 infixr 2 _||_
@@ -20,10 +21,12 @@ infixr 2 _||_
 _||_ : Bool → Bool → Bool
 true  || _ = true
 false || x = x
+{-# INLINE _||_ #-}
 
 _&&_ : Bool → Bool → Bool
 true  && x = x
 false && _ = false
+{-# INLINE _&&_ #-}
 
 not : Bool → Bool
 not true  = false
@@ -38,13 +41,10 @@ data IsFalse : Bool → Set where
 
 instance
   EqBool : Eq Bool
-  EqBool = record { _==_ = eqBool }
-    where
-      eqBool : (x y : Bool) → Dec (x ≡ y)
-      eqBool false false = yes refl
-      eqBool false true  = no (λ ())
-      eqBool true  false = no (λ ())
-      eqBool true  true  = yes refl
+  _==_ {{EqBool}} false false = yes refl
+  _==_ {{EqBool}} false true  = no λ ()
+  _==_ {{EqBool}} true  false = no λ ()
+  _==_ {{EqBool}} true  true  = yes refl
 
 decBool : ∀ b → Dec (IsTrue b)
 decBool false = no λ ()

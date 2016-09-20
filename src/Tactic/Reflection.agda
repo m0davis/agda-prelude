@@ -7,6 +7,7 @@ open import Tactic.Reflection.DeBruijn   public
 open import Tactic.Reflection.Telescope  public
 open import Tactic.Reflection.Substitute public
 open import Tactic.Reflection.Free       public
+open import Tactic.Reflection.Equality   public
 
 set₀ : Type
 set₀ = agda-sort (lit 0)
@@ -45,7 +46,7 @@ infixl 9 _`∘_
 _`∘_ : Term → Term → Term
 _`∘_ = def₂ (quote _∘_)
 
-infixr 0 _`$_
+infixr -20 _`$_
 _`$_ : Term → Term → Term
 _`$_ = def₂ (quote _$_)
 

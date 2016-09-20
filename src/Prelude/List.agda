@@ -14,6 +14,7 @@ open import Prelude.Decidable
 open import Prelude.Equality
 open import Prelude.Ord
 open import Prelude.Semiring
+open import Prelude.Strict
 
 open import Agda.Builtin.List public
 
@@ -44,6 +45,10 @@ foldl : ∀ {a b} {A : Set a} {B : Set b} → (B → A → B) → B → List A �
 foldl f z []       = z
 foldl f z (x ∷ xs) = foldl f (f z x) xs
 
+foldl! : ∀ {a b} {A : Set a} {B : Set b} → (B → A → B) → B → List A → B
+foldl! f z []       = z
+foldl! f z (x ∷ xs) = force (f z x) λ z′ → foldl! f z′ xs
+
 reverse : ∀ {a} {A : Set a} → List A → List A
 reverse xs = foldl (flip _∷_) [] xs
 
@@ -57,6 +62,14 @@ filter : ∀ {a} {A : Set a} → (A → Bool) → List A → List A
 filter p [] = []
 filter p (x ∷ xs) = if p x then x ∷ filter p xs
                            else filter p xs
+
+all? : ∀ {a} {A : Set a} → (A → Bool) → List A → Bool
+all? p []       = true
+all? p (x ∷ xs) = p x && all? p xs
+
+any? : ∀ {a} {A : Set a} → (A → Bool) → List A → Bool
+any? p []       = true
+any? p (x ∷ xs) = p x || any? p xs
 
 take : ∀ {a} {A : Set a} → Nat → List A → List A
 take zero    _        = []
@@ -93,12 +106,34 @@ replicate : ∀ {a} {A : Set a} → Nat → A → List A
 replicate zero x = []
 replicate (suc n) x = x ∷ replicate n x
 
+zipWith : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
+            (A → B → C) → List A → List B → List C
+zipWith f [] _ = []
+zipWith f _ [] = []
+zipWith f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWith f xs ys
+
+zip : ∀ {a b} {A : Set a} {B : Set b} → List A → List B → List (A × B)
+zip = zipWith _,_
+
+module _ {a b} {F : Set a → Set b} {{_ : Applicative F}} {A : Set a} where
+
+  replicateA : Nat → F A → F (List A)
+  replicateA zero    _ = pure []
+  replicateA (suc n) x = pure _∷_ <*> x <*> replicateA n x
+
 module _ {a} {A : Set a} {{_ : Semiring A}} where
+
   sum : List A → A
-  sum = foldr _+_ zro
+  sum = foldl! _+_ zro
 
   product : List A → A
-  product = foldr _*_ one
+  product = foldl! _*_ one
+
+  sumR : List A → A
+  sumR = foldr _+_ zro
+
+  productR : List A → A
+  productR = foldr _*_ one
 
 module _ {a} {A : Set a} {{_ : Ord A}} where
   insert : A → List A → List A
@@ -109,15 +144,23 @@ module _ {a} {A : Set a} {{_ : Ord A}} where
   sort [] = []
   sort (x ∷ xs) = insert x (sort xs)
 
-infix 10 from_for_
+infix 10 from_for_ from_to_ from_for_step_ from-to-step
 from_for_ : Nat → Nat → List Nat
-from_for_ 0  0   = []  -- make strict
-from_for_ a  0   = []
-from_for_ a (suc d) = a ∷ from suc a for d
+from 0 for 0     = []  -- make strict
+from a for 0     = []
+from a for suc d = a ∷ from suc a for d
 
-infix 10 from_to_
+from_for_step_ : Nat → Nat → Nat → List Nat
+from 0 for 0     step _  = []  -- make strict
+from a for 0     step _  = []
+from a for suc c step d = a ∷ from a + d for c step d
+
 from_to_ : Nat → Nat → List Nat
 from a to b = from a for (suc b - a)
+
+syntax from-to-step d a b = from a to b step d
+from-to-step : (d : Nat) {{_ : NonZero d}} → Nat → Nat → List Nat
+from-to-step d a b = from a for 1 + (b - a) div d step d
 
 --- Equality ---
 
@@ -146,7 +189,7 @@ private
 
 instance
   EqList : ∀ {a} {A : Set a} {{EqA : Eq A}} → Eq (List A)
-  EqList = record { _==_ = eqList }
+  _==_ {{EqList}} = eqList
 
 --- Ord ---
 
@@ -181,13 +224,14 @@ instance
 
 instance
   FunctorList : ∀ {a} → Functor (List {a})
-  FunctorList = record { fmap = map }
+  fmap {{FunctorList}} = map
 
   MonadList : ∀ {a} → Monad (List {a})
-  MonadList = record { return = λ x → x ∷ [] ; _>>=_ = flip concatMap }
+  return {{MonadList}} x    = x ∷ []
+  _>>=_  {{MonadList}} xs f = concatMap f xs
 
   MonadList′ : ∀ {a b} → Monad′ {a} {b} List
-  MonadList′ = record { _>>=′_ = flip concatMap }
+  _>>=′_ {{MonadList′}} xs f = concatMap f xs
 
   ApplicativeList : ∀ {a} → Applicative (List {a})
   ApplicativeList = defaultMonadApplicative
