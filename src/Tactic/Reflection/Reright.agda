@@ -1,8 +1,6 @@
 module Tactic.Reflection.Reright where
   open import Prelude
 
-  open import Container.Traversable
-
   open import Tactic.Reflection
   open import Tactic.Reflection.Match
   open import Tactic.Reflection.Replace
@@ -27,223 +25,128 @@ module Tactic.Reflection.Reright where
     reorderVars xs (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars xs) args
     reorderVars xs unknown = unknown
 
-    {-# TERMINATING #-}
-    freeDependencies : List (Arg Type) → Type → Maybe VarSet
-    freeDependencies Γ x = foldr _∪_ (freeVars x) <$> mapM go (freeVars x) where
-      _∪_ : VarSet → VarSet → VarSet -- REFACTOR this was stolen from Tactic.Reflection.Free
-      []       ∪ ys = ys
-      xs       ∪ [] = xs
-      (x ∷ xs) ∪ (y ∷ ys) with compare x y
-      ... | (less    _) = x ∷ (xs ∪ (y ∷ ys))
-      ... | (equal   _) = x ∷ (xs ∪ ys)
-      ... | (greater _) = y ∷ ((x ∷ xs) ∪ ys)
-
-      go : Nat → Maybe VarSet
-      go v = weaken (suc v) $ join $ freeDependencies (drop (suc v) Γ) <$> (unArg <$> index Γ v)
-
-    .test-freeDependencies₁ : freeDependencies [] unknown ≡ just []
-    test-freeDependencies₁ = refl
-
-    .test-freeDependencies₂ : freeDependencies (vArg (var₀ 0) ∷ vArg unknown ∷ []) (var₀ 0) ≡ just (0 ∷ 1 ∷ [])
-    test-freeDependencies₂ = refl
-
-    .test-freeDependencies₃ : freeDependencies (vArg (var₀ 0) ∷ vArg (var₀ 1) ∷ vArg unknown ∷ vArg unknown ∷ []) (var₀ 0) ≡ just (0 ∷ 1 ∷ 3 ∷ [])
-    test-freeDependencies₃ = refl
-
-    .test-freeDependencies₄ : freeDependencies (vArg (var₀ 0) ∷ vArg (var₀ 1) ∷ vArg unknown ∷ vArg unknown ∷ []) (var₀ 1) ≡ just (1 ∷ 3 ∷ [])
-    test-freeDependencies₄ = refl
-
-    .test-freeDependencies₅ : freeDependencies (vArg (var₀ 1) ∷ vArg unknown ∷ vArg unknown ∷ []) (var₀ 0) ≡ just (0 ∷ 2 ∷ [])
-    test-freeDependencies₅ = refl
-
-    .test-freeDependencies₆ : freeDependencies (vArg (var₀ 0) ∷ vArg (var₀ 1) ∷ vArg unknown ∷ vArg unknown ∷ []) (var₁ 0 (var₀ 1)) ≡ just (0 ∷ 1 ∷ 3 ∷ [])
-    test-freeDependencies₆ = refl
+    -- replace the iᵗʰ element of xs with the value y
+    setElem : Nat → ∀ {a} {A : Set a} → A → List A → List A
+    setElem i y xs =
+      let xs' = splitAt i xs
+      in
+      fst xs' ++ (y ∷ drop 1 (snd xs'))
 
     record Request : Set where
       field
         l≡r : Term
         A : Type
         L R : Type
-        Γᶜ : List (Arg Type)
+        Γ : List (Arg Type)
         𝐺 : Type
 
-      [iᶜ∣iᶜ∈FVᴬ] : VarSet
-      [iᶜ∣iᶜ∈FVᴬ] = maybe [] id $ freeDependencies Γᶜ A -- TODO this is a hack; I don't expect freeDependencies will return 'nothing', but if it does, I hope(!) the rest of the computation will fail
+      {-
+                             <------- helper-type--------- ... -->
+         <------- Γ ------->        <------ Γ[w/L] ------>
+         γ₀ γ₁ ... γᵢ ... γₙ w w≡R γ'₀ γ'₁ ... γ'ⱼ ... γ'ₘ
 
-      [iᶜ∣iᶜ∉FVᴬ] : VarSet
-      [iᶜ∣iᶜ∉FVᴬ] = filter (not ∘ flip elem [iᶜ∣iᶜ∈FVᴬ]) (from 0 for (length Γᶜ))
+         γ' = γ'ⱼ
+      -}
+      Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ] = go 0 0 (from 0 for (length Γ + 2)) Γ where
+        go : Nat → Nat → List Nat → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ [] = []
+        go i j osⱼ (γ ∷ γs) =
+          let n = length Γ - 1
+              L' = weaken (2 + j) L
+              γ' = weaken ((n - i) + 3 + j) γ
+              w' = var₀ (suc j)
+              γ'[w'/L'] = γ' r[ w' / L' ]
+              γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+              γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+              γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+          in
+          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then (
+            let osⱼ′ = splitAt (j + 3 + n - i) (0 ∷ weaken 1 osⱼ)
+                osⱼ₊₁ = fst osⱼ′ ++ (0 ∷ drop 1 (snd osⱼ′))
+            in
+            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) osⱼ₊₁ γs
+          ) else
+            go (suc i) j (0 ∷ weaken 1 osⱼ) γs
 
-      record γᶜ' : Set where
-        field
-          iᶜ : Nat
-          γᶜᵢ : Arg Type
-          iᶜ∈FVᴬ : Bool
-          iʷ : Nat
-          γᶜᵢ∈Γʳ : Bool
+      Γ[w/L] : List (Arg Type)
+      Γ[w/L] = fst <$> Γ[w/L]×indexes[Γ]
 
-        gᶜᵢ : Type
-        gᶜᵢ = unArg γᶜᵢ
+      indexes[Γ] : List Nat
+      indexes[Γ] = snd <$> Γ[w/L]×indexes[Γ]
 
-      {-# TERMINATING #-}
-      Γᶜ' : List γᶜ'
-      Γᶜ' = go 0 Γᶜ where
-        go : Nat → List (Arg Type) → List γᶜ'
-        go iᶜ [] = []
-        go iᶜ (γᶜᵢ ∷ Γᶜ) = γᶜᵢ' ∷ go (suc iᶜ) (weaken 1 Γᶜ) where
-          γᶜᵢ' = record
-            { iᶜ = iᶜ
-            ; γᶜᵢ = γᶜᵢ
-            ; iᶜ∈FVᴬ = elem iᶜ [iᶜ∣iᶜ∈FVᴬ]
-            ; iʷ = if elem iᶜ [iᶜ∣iᶜ∉FVᴬ] then (length (filter (_<? iᶜ) [iᶜ∣iᶜ∉FVᴬ])) else (length [iᶜ∣iᶜ∉FVᴬ] + (length (filter (_≤? iᶜ) [iᶜ∣iᶜ∈FVᴬ])))
-            ; γᶜᵢ∈Γʳ = let gᶜᵢ = unArg γᶜᵢ in (isNo $ weaken 1 gᶜᵢ == weaken 1 gᶜᵢ r[ unknown / L ]) && (isNo $ l≡r == var₀ iᶜ)
-            }
+      ∣Γᴸ∣ = length Γ[w/L]
 
-      [iʷ∣γᶜᵢ∈Γʳ] : VarSet
-      [iʷ∣γᶜᵢ∈Γʳ] = iʷ <$> filter γᶜᵢ∈Γʳ Γᶜ' where open γᶜ'
+      {-
+         <---------------------- helper-type------------------ ... -->
+               <---- Γ[w/L] ----->   <------ Γ[R/L] ------->
+         w w≡R γ₀ γ₁ ... γᵢ ... γₙ ( γ'₀ γ'₁ ... γ'ᵢ ... γ'ₙ )
+         n = ∣Γᴸ∣ - 1 = length Γ[w/L] - 1
+      -}
+      Γ[R/L] : List (Arg Type)
+      Γ[R/L] = go 0 Γ[w/L] where
+        go : Nat → List (Arg Type) → List (Arg Type)
+        go _ [] = []
+        go i (γ ∷ γs) =
+          -- γ is the index[γ]ᵗʰ element of Γ[w/L]
+          let n = ∣Γᴸ∣ - 1
+              γ' = weakenFrom i ∣Γᴸ∣ γ
+              w' = var₀ (i + n + 2)
+              R' = weaken (2 + ∣Γᴸ∣ + i) R
+              γ'[R'/w'] = γ' r[ R' / w' ]
+          in
+            γ'[R'/w'] ∷ go (suc i) γs
 
-      [iʷ] : List Nat
-      [iʷ] = iʷ <$> Γᶜ' where open γᶜ'
-
-      subsetList : {A : Set} → List A → List Nat → Maybe (List A)
-      subsetList xs is = traverse (index xs) is
-
-      module _ where
-        private
-          Γʷ/ᶜ : Maybe (List (Arg Type))
-          Γʷ/ᶜ = go [iʷ] Γᶜ where
-            go : List Nat → List (Arg Type) → Maybe (List (Arg Type))
-            go _ [] = just []
-            go [] _ = nothing
-            go (iʷ ∷ [iʷ]) (γᶜᵢ ∷ Γᶜ) = _∷_ <$> (strengthen (suc iʷ) $ reorderVars [iʷ] <$> γᶜᵢ) <*> (go [iʷ] Γᶜ)
-
-        Γʷ/ᴬ = join $ subsetList <$> Γʷ/ᶜ <*> pure [iᶜ∣iᶜ∈FVᴬ]
-        Γʷ/⁻ᴬ = join $ subsetList <$> Γʷ/ᶜ <*> pure [iᶜ∣iᶜ∉FVᴬ]
-
-      module _ where
-        private
-          --Lʷ : Term
-          Lʷ = reorderVars [iʷ] L
-
-        --Γʷ : Maybe (List (Arg Type))
-        -- Γʷ = caseF Γʷ' of _R[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ] where
-        Γʷ = _R[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ] <$> Γʷ' where
-          Γʷ' : Maybe (List (Arg Type))
-          Γʷ' = _++_ <$> Γʷ/⁻ᴬ
---                         <*> (_∷_ <$> (strengthen (length [iᶜ∣iᶜ∉FVᴬ] + 1) $ hArg $ reorderVars [iʷ] A)
-                         <*> (_∷_ <$> (strengthen (suc (length [iᶜ∣iᶜ∉FVᴬ])) $ hArg $ reorderVars [iʷ] A)
---                         <*> (_∷_ <$> (strengthen (suc $ length [iᶜ∣iᶜ∉FVᴬ]) $ hArg $ reorderVars [iʷ] A)
-                                       <*>
-                                       Γʷ/ᴬ
-                             )
-
-        𝐺ʷ = reorderVars [iʷ] 𝐺 r[ var₀ (length [iᶜ∣iᶜ∉FVᴬ]) / Lʷ ]
-
-      module _ where
-        private
-          Rʷ = reorderVars [iʷ] R
-
-        gʳ : Maybe Type
-        gʳ = join $ go <$> gʳ' <*> pure [iʷ∣γᶜᵢ∈Γʳ] <*> pure 𝐺ʷʳ where
-          go : List (Arg Type) → List Nat → Type → Maybe Type
-          go [] [] 𝐺 = just 𝐺
-          go (γʷ ∷ Γʷ) (iʷ ∷ iʷs) 𝐺 = go Γʷ iʷs $ pi (weaken (1 + iʷ) γʷ) $ abs "_" $ weaken 1 𝐺 r[ var₀ 0 / var₀ $ weaken 1 iʷ ]
-          go _ _ _ = nothing
-
-          gʳ' : Maybe (List (Arg Type))
-          gʳ' = join $ subsetList <$> (caseF Γʷ of _R[ Rʷ / var₀ (length [iᶜ∣iᶜ∉FVᴬ]) ]) <*> pure [iʷ∣γᶜᵢ∈Γʳ]
-
-          𝐺ʷʳ = 𝐺ʷ r[ Rʷ / var₀ (length [iᶜ∣iᶜ∉FVᴬ]) ]
-
-        helper-type : Maybe Type
-        helper-type = telPi <$> (_++_ <$> (reverse <$> Γʷ)
-                                          <*>
-                                          (_∷_ <$> (pure $ vArg (def₂ (quote _≡_) (var₀ (length [iᶜ∣iᶜ∉FVᴬ])) Rʷ))
-                                                   <*>
-                                                   ([_] ∘ vArg <$> (weaken 1 <$> gʳ))
-                                          )
-                                )
-                                <*>
-                                pure (weaken 2 𝐺ʷ)
-
-      make-vars-from-args : List Nat → List (Arg Type) → Maybe (List (Arg Type))
-      make-vars-from-args [] [] = pure []
-      make-vars-from-args (i ∷ is) (x ∷ xs) = _∷_ <$> pure (var₀ i <$ x) <*> make-vars-from-args is xs
-      make-vars-from-args _ _ = nothing
-
-      defineHelper : Bool → Name → TC ⊤
-      defineHelper debug n =
-        maybe (typeError ( strErr "error constructing helper function type, patterns, or term" ∷
-                           strErr "\nhelper-type:" ∷ termErr (maybe unknown id helper-type) ∷
-                           strErr "\n`helper-type:" ∷ termErr (` helper-type) ∷
-                           strErr "\nhelper-patterns:" ∷ termErr (` helper-patterns) ∷
-                           strErr "\nhelper-term:" ∷ termErr (maybe unknown id helper-term) ∷
-                           strErr "\ngʳ:" ∷ termErr (` gʳ) ∷
-                           strErr "\nΓʷ:" ∷ termErr (` Γʷ) ∷
-                           strErr "\n𝐺ʷ:" ∷ termErr (` 𝐺ʷ) ∷
-                           strErr "\nl≡r:" ∷ termErr (` l≡r) ∷
-                           strErr "\nA:" ∷ termErr (` A) ∷
-                           strErr "\nL:" ∷ termErr (` L) ∷
-                           strErr "\nR:" ∷ termErr (` R) ∷
-                           strErr "\nΓᶜ:" ∷ termErr (` Γᶜ) ∷
-                           strErr "\n𝐺:" ∷ termErr (` 𝐺) ∷
-                           strErr "\nΓʷ/ᴬ" ∷ termErr (` Γʷ/ᴬ) ∷
-                           strErr "\nΓʷ/⁻ᴬ" ∷ termErr (` Γʷ/⁻ᴬ) ∷
-                           strErr "\n[iᶜ∣iᶜ∈FVᴬ]" ∷ termErr (` [iᶜ∣iᶜ∈FVᴬ]) ∷
-                           strErr "\n[iᶜ∣iᶜ∉FVᴬ]" ∷ termErr (` [iᶜ∣iᶜ∉FVᴬ]) ∷
-                           strErr "\n[iʷ]" ∷ termErr (` [iʷ]) ∷
-                           [] ))
-              (λ {(helper-type , helper-patterns , helper-term) →
-                catchTC
-                  (define (vArg n) helper-type [ clause helper-patterns helper-term ] ~|
-                   if debug then typeError [] else return tt
-                   )
-                  (typeError ( strErr "error defining helper function" ∷
-                               strErr "\nhelper-type:" ∷ termErr helper-type ∷
-                               strErr "\n`helper-type:" ∷ termErr (` helper-type) ∷
-                               strErr "\nhelper-patterns:" ∷ termErr (` helper-patterns) ∷
-                               strErr "\nhelper-term:" ∷ termErr helper-term ∷
-                               strErr "\n`helper-term:" ∷ termErr (` helper-term) ∷
-                               strErr "\ngʳ:" ∷ termErr (` gʳ) ∷
-                               strErr "\nΓʷ:" ∷ termErr (` Γʷ) ∷
-                               strErr "\n𝐺ʷ:" ∷ termErr (` 𝐺ʷ) ∷
-                               strErr "\nl≡r:" ∷ termErr (` l≡r) ∷
-                               strErr "\nA:" ∷ termErr (` A) ∷
-                               strErr "\nL:" ∷ termErr (` L) ∷
-                               strErr "\nR:" ∷ termErr (` R) ∷
-                               strErr "\nΓᶜ:" ∷ termErr (` Γᶜ) ∷
-                               strErr "\n𝐺:" ∷ termErr (` 𝐺) ∷
-                               strErr "\nΓʷ/ᴬ" ∷ termErr (` Γʷ/ᴬ) ∷
-                               strErr "\nΓʷ/⁻ᴬ" ∷ termErr (` Γʷ/⁻ᴬ) ∷
-                               strErr "\n[iᶜ∣iᶜ∈FVᴬ]" ∷ termErr (` [iᶜ∣iᶜ∈FVᴬ]) ∷
-                               strErr "\n[iᶜ∣iᶜ∉FVᴬ]" ∷ termErr (` [iᶜ∣iᶜ∉FVᴬ]) ∷
-                               strErr "\n[iʷ]" ∷ termErr (` [iʷ]) ∷
-                               [] ))
-                  })
-              (_,_ <$> helper-type <*> (_,_ <$> helper-patterns <*> helper-term))
+      {-
+         Γ             Γ[w/L]   Γ[R/L]
+         0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
+      -}
+      𝐺[R/L] : Type
+      𝐺[R/L] =
+        let os = from 0 for (2 * ∣Γᴸ∣ + 2 + length Γ)
+            os′ = go 0 indexes[Γ] os
+            𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
+        in
+          reorderVars os′ 𝐺'
         where
 
-        helper-patterns : Maybe (List (Arg Pattern))
-        helper-patterns = (λ pa w p-a pr → pa ++ w ∷ (p-a ++ pr)) <$> (telePat ∘ reverse <$> Γʷ/ᴬ) <*> just (hArg dot) <*> (telePat ∘ reverse <$> Γʷ/⁻ᴬ) <*> pure (vArg (con₀ (quote refl)) ∷ [ vArg (var "_") ])
+        go : Nat → List Nat → List Nat → List Nat
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ setElem (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i) ((∣Γᴸ∣ - 1) - j) ns
 
-        helper-term : Maybe Term
-        helper-term =
-          γʷs ← join $ subsetList <$> Γʷ <*> pure [iʷ∣γᶜᵢ∈Γʳ] -|
-          iʷs ← make-vars-from-args [iʷ∣γᶜᵢ∈Γʳ] γʷs -|
-          pure (var 0 (reverse (weaken 1 iʷs)))
-
-      callHelper : Name → Tactic
-      callHelper n hole =
-        maybe (typeError [ strErr "error constructing helper call" ])
-              (unify hole)
-              $ helper-call n
+      𝐺[w/L] : Type
+      𝐺[w/L] =
+        let os = from 0 for (1 + ∣Γᴸ∣ + 2 + length Γ)
+            os′ = go 0 indexes[Γ] os
+            𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+        in
+          reorderVars os′ 𝐺'
         where
 
-        helper-call : Name → Maybe Term
-        helper-call n = def n <$> (reverse <$> (_∷_ <$> pure (vArg l≡r) <*> Γʰ)) where
-          Γʰ : Maybe $ List $ Arg Term
-          Γʰ = (λ xs → take (length [iᶜ∣iᶜ∉FVᴬ]) xs ++ hArg unknown ∷ drop (length [iᶜ∣iᶜ∉FVᴬ]) xs) <$> (join $ make-vars-from-args <$> pure ([iᶜ∣iᶜ∉FVᴬ] ++ [iᶜ∣iᶜ∈FVᴬ]) <*> Γʰ') where
-            Γʰ' : Maybe (List (Arg Type))
-            Γʰ' = _++_ <$> subsetList Γᶜ [iᶜ∣iᶜ∉FVᴬ] <*> subsetList Γᶜ [iᶜ∣iᶜ∈FVᴬ]
+        go : Nat → List Nat → List Nat → List Nat
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ setElem (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i) (1 + (∣Γᴸ∣ - 1) - j) ns
+
+
+      w : Arg Type
+      w = hArg A
+
+      w≡R : Arg Type
+      w≡R = vArg (def₂ (quote _≡_) (var₀ 0) (weaken 1 R))
+
+      helper-type : Type
+      helper-type = telPi ((w ∷ w≡R ∷ Γ[w/L]) ++ [ vArg (telPi Γ[R/L] 𝐺[R/L]) ]) 𝐺[w/L]
+
+      helper-patterns : List (Arg Pattern)
+      helper-patterns = (hArg dot ∷ vArg (con₀ (quote refl)) ∷ telePat Γ[w/L]) ++ [ vArg (var "_") ]
+
+      helper-term : Term
+      helper-term = var 0 (weaken 1 (teleArgs Γ[w/L]))
+
+      helper-call-args : List (Arg Term)
+      helper-call-args = hArg unknown ∷ vArg l≡r ∷ helper-call-args' where
+        helper-call-args' : List (Arg Term)
+        helper-call-args' = (λ { (γ[w/L] , index[γ]) → var₀ (length Γ - index[γ] - 1) <$ γ[w/L] }) <$> Γ[w/L]×indexes[Γ]
 
     inferGoal : Term → TC Type
     inferGoal hole = unPi =<< forceFun =<< inferType hole where
@@ -258,23 +161,40 @@ module Tactic.Reflection.Reright where
       L≡R-matched ← maybe (typeError (strErr "not an equality" ∷ termErr l≡r ∷ termErr L≡R ∷ [])) pure $
         match 3 (def (quote _≡_) (hArg unknown ∷ (hArg (var₀ 0)) ∷ (vArg (var₀ 1)) ∷ (vArg (var₀ 2)) ∷ [])) L≡R -|
       𝐺 ← inferGoal hole -|
-      Γᶜ ← getContext -|
+      Γ ← getContext -|
       case L≡R-matched of λ { (A ∷ L ∷ R ∷ []) →
-        pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γᶜ = Γᶜ ; 𝐺 = 𝐺 } }
+        pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = reverse Γ ; 𝐺 = 𝐺 } }
 
   macro
-    reright : Nat → Term → Tactic
-    reright ignored l≡r hole =
+    reright-debug : Term → Tactic
+    reright-debug l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"     ∷
+                  strErr "\nl≡r:"            ∷ termErr (` (Request.l≡r q))      ∷
+                  strErr "\nA:"              ∷ termErr (` A)                    ∷
+                  strErr "\nL:"              ∷ termErr (` L)                    ∷
+                  strErr "\nR:"              ∷ termErr (` R)                    ∷
+                  strErr "\nΓ:"              ∷ termErr (` Γ)                    ∷
+                  strErr "\n𝐺:"              ∷ termErr (` 𝐺)                    ∷
+                  strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
+                  strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
+                  strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
+                  strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
+                  strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
+                  strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
+                  strErr "\nw:"              ∷ termErr (` w)                    ∷
+                  strErr "\nw≡R:"            ∷ termErr (` w≡R)                  ∷
+                  strErr "helper-type:"      ∷ termErr helper-type              ∷
+                  strErr "helper-patterns:"  ∷ termErr (` helper-patterns)      ∷
+                  strErr "helper-term:"      ∷ termErr (` helper-term)          ∷
+                  strErr "helper-call-args:" ∷ termErr (` helper-call-args)     ∷
+                  [] )
+
+    reright : Term → Tactic
+    reright l≡r hole =
       q ← getRequest l≡r hole -|
       n ← freshName "reright" -|
       let open Request q in
-      defineHelper false n ~|
-      callHelper n hole
-
-    reright' : Nat → Term → Tactic
-    reright' ignored l≡r hole =
-      q ← getRequest l≡r hole -|
-      n ← freshName "reright" -|
---      let open Request q in
-      Request.defineHelper q true n ~|
-      Request.callHelper q n hole
+      catchTC (typeError [ strErr "error defining helper function" ]) (define (vArg n) helper-type [ clause helper-patterns helper-term ]) ~|
+      unify hole (def n helper-call-args)
