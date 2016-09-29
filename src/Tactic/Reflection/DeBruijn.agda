@@ -41,9 +41,16 @@ private
   Str A = Nat → Nat → A → Maybe A
 
   strVar : Str Nat
+  strVar lo n x with x <? lo
+  ... | true = just x
+  ... | false with x <? lo + n
+  ... | true = nothing
+  ... | false = just (x - n)
+  {-
   strVar lo n x = if      x <? lo     then just x
                   else if x <? lo + n then nothing
                   else                just (x - n)
+  -}
 
   strArgs    : Str (List (Arg Term))
   strArg     : Str (Arg Term)
