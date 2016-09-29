@@ -7,35 +7,58 @@ module Tactic.Reflection.Reright where
   open import Tactic.Reflection.Quote
 
   private
-    weakenList : List Nat → List Nat
-    weakenList [] = []
---    weakenList (x ∷ xs) = (if ((_<?_ $! x) $! 0) then x else suc x) ∷ weakenList xs
+    weakenList₁ : List Nat → List Nat
+    weakenList₁ xs = weaken 1 xs
 
-    weakenList (x ∷ xs) with x <? 0
-    ... | true = x ∷ weakenList xs
-    ... | false = (suc x) ∷ weakenList xs
+    weakenList₂ : List Nat → List Nat
+    weakenList₂ [] = []
+    weakenList₂ (x ∷ xs) with x <? 0
+    ... | true = x ∷ weakenList₂ xs
+    ... | false = (suc x) ∷ weakenList₂ xs
 
-    weakenList' : List Nat → List Nat
-    weakenList' [] = []
-    weakenList' (x ∷ xs) with x <? 0
-    ... | true = x ∷ weakenList' xs
-    ... | false = (x + 1) ∷ weakenList' xs
-
-    weakenList'' : List Nat → List Nat
-    weakenList'' [] = []
-    weakenList'' (x ∷ xs) = (if x <? 0 then x else (x + 1)) ∷ weakenList xs
-
+    weakenList₃ : List Nat → List Nat
+    weakenList₃ [] = []
+    weakenList₃ (x ∷ xs) = (if x <? 0 then x else suc x) ∷ weakenList₃ xs
 
     nmap : (Nat → Nat) → List Nat → List Nat
     nmap f []       = []
     nmap f (x ∷ xs) = f x ∷ nmap f xs
 
-    weakenList''' : List Nat → List Nat
-    weakenList''' xs = nmap (λ x → if x <? 0 then x else (suc x)) xs
+    nmap' : (Nat → Nat) → List Nat → List Nat
+    nmap' f []       = []
+    nmap' f (x ∷ xs) with f x
+    ... | fx = fx ∷ nmap f xs
 
-    weakenOrder : List (Nat × Nat) → List (Nat × Nat)
-    weakenOrder [] = []
-    weakenOrder ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenOrder xs
+    weakenVar : Nat → Nat
+    weakenVar x with x <? 0
+    ... | true = x
+    ... | false = suc x
+
+    weakenList₄ : List Nat → List Nat
+    weakenList₄ xs = nmap (λ x → if x <? 0 then x else (suc x)) xs
+
+    weakenList₅ : List Nat → List Nat
+    weakenList₅ xs = nmap weakenVar xs
+
+    weakenList₆ : List Nat → List Nat
+    weakenList₆ xs = nmap' weakenVar xs
+
+    weakenList₇ : List Nat → List Nat
+    weakenList₇ xs = nmap' suc xs
+
+    weakenList₈ : List Nat → List Nat
+    weakenList₈ xs = fmap suc xs
+
+    weakenList₉ : List Nat → List Nat
+    weakenList₉ [] = []
+    weakenList₉ (x ∷ xs) = suc x ∷ weakenList₉ xs
+
+    weakenOrder₁ : List (Nat × Nat) → List (Nat × Nat)
+    weakenOrder₁ [] = []
+    weakenOrder₁ ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenOrder₁ xs
+
+    weakenOrder₂ : List (Nat × Nat) → List (Nat × Nat)
+    weakenOrder₂ = fmap (λ {(x , n) → (suc x , suc n)})
 
     orderingToReplacement : List Nat → List (Nat × Nat)
     orderingToReplacement xs = go 0 xs where
@@ -247,16 +270,31 @@ module Tactic.Reflection.Reright where
           (reorderVars-fast (orderingToReplacement osⱼ) <$> γ) ∷ (go (0 ∷ (weaken 1 osⱼ)) γs)
       -}
 
-      Γ[w/L]'  : List (Arg Type)
+      Γ[w/L]' : List (Arg Type)
       Γ[w/L]' = go (from 0 for (length Γ + 2)) Γ where
         go : List Nat → List (Arg Type) → List (Arg Type)
         go _ [] = []
         go osⱼ (γ ∷ γs) =
-          (reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList''' osⱼ)) γs)
-          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weaken 1 osⱼ)) γs)
-          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weaken 1 osⱼ)) γs)
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₁ osⱼ)) γs) -- slow
+          (reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₂ osⱼ)) γs) -- fast
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₃ osⱼ)) γs) -- slow
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₄ osⱼ)) γs) -- slow
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₅ osⱼ)) γs) -- slow
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₆ osⱼ)) γs) -- slow
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₇ osⱼ)) γs) -- fast
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₈ osⱼ)) γs) -- fast
+          --(reorderVars-index osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₉ osⱼ)) γs) -- fast
 
-      {-
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₁ osⱼ)) γs) -- slow
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₂ osⱼ)) γs) -- fast
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₃ osⱼ)) γs) -- slow
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₄ osⱼ)) γs) -- slow
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₅ osⱼ)) γs) -- slow
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₆ osⱼ)) γs) -- slow
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₇ osⱼ)) γs) -- fast
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₈ osⱼ)) γs) -- fast
+          --(reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList₉ osⱼ)) γs) -- fast
+
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
       Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
         go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
@@ -272,16 +310,15 @@ module Tactic.Reflection.Reright where
               γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
           in
           if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
-            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ (weakenOrder osⱼ)) γs
+            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ (weakenOrder₂ osⱼ)) γs
           else
-            go (suc i) j (weakenOrder osⱼ) γs
-      -}
+            go (suc i) j (weakenOrder₂ osⱼ) γs
 
-      {-
       Γ[w/L] : List (Arg Type)
       Γ[w/L] = fst <$> Γ[w/L]×indexes[Γ]
       --Γ[w/L] = vArg unknown ∷ []
 
+      {-
       indexes[Γ] : List Nat
       indexes[Γ] = snd <$> Γ[w/L]×indexes[Γ]
       --indexes[Γ] = 30 ∷ []
@@ -384,9 +421,9 @@ module Tactic.Reflection.Reright where
                   strErr "\nR:"              ∷ termErr (` R)                    ∷
                   strErr "\nΓ:"              ∷ termErr (` Γ)                    ∷
                   strErr "\n𝐺:"              ∷ termErr (` 𝐺)                    ∷
-                  strErr "\nΓ[w/L]':"        ∷ termErr (` Γ[w/L]')              ∷
-{-
+--                  strErr "\nΓ[w/L]':"        ∷ termErr (` Γ[w/L]')              ∷
                   strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
+{-
                   strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
                   strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
 -}
