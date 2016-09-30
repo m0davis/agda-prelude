@@ -212,9 +212,6 @@ module Tactic.Reflection.Reright where
           go j (i ∷ is) ns = go (suc j) is $ (1 + |l| + 2 + (length Γ - 1) - i , 1 + (|l| - 1) - j) ∷ ns
 -}
 
-
-
-
       {-
       something : Nat × List (Arg Type × Nat)
       something = (0 , go 0 0 [] Γ) where
@@ -270,7 +267,6 @@ module Tactic.Reflection.Reright where
                                          in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
         ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (γ'[w'/L'][reordered] , i) ∷ foo
         ... | false = go (suc i) j (weakenOrder osⱼ) γs
-
 
       everything : List (Arg Type × Nat) × Type
       everything

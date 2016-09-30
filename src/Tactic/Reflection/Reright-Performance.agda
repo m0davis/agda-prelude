@@ -1,10 +1,64 @@
-{-# OPTIONS -v profile:10 #-}
+--{-# OPTIONS -v profile:10 #-}
 -- compare agda issue 426
 module Tactic.Reflection.Reright-Performance where
+  open import Agda.Primitive
   open import Agda.Builtin.Bool
   open import Agda.Builtin.Nat
   open import Agda.Builtin.List
   open import Agda.Builtin.Equality
+
+  module before-and-after-more-mystery where
+    infixr 1 _,_
+    data Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
+      _,_ : (x : A) (y : B x) → Σ A B
+
+    instance
+      ipair : ∀ {a b} {A : Set a} {B : A → Set b} {{x : A}} {{y : B x}} → Σ A B
+      ipair {{x}} {{y}} = x , y
+
+    fst : ∀ {a b} {A : Set a} {B : A → Set b} → Σ A B → A
+    fst (x , y) = x
+
+    snd : ∀ {a b} {A : Set a} {B : A → Set b} (p : Σ A B) → B (fst p)
+    snd (x , y) = y
+
+    infixr 3 _×_
+    _×_ : ∀ {a b} → Set a → Set b → Set (a ⊔ b)
+    A × B = Σ A (λ _ → B)
+
+    length : ∀ {a} {A : Set a} → List A → Nat
+    length []       = 0
+    length (x ∷ xs) = 1 + length xs
+
+    compare-before-cons : List Nat → Nat × List Nat
+    compare-before-cons [] = 0 , []
+    compare-before-cons (n ∷ ns) = ifthenelse (n < 50) where
+      ifthenelse : Bool → Nat × List Nat
+      ifthenelse true = 0 , suc n ∷ snd (compare-before-cons ns)
+      ifthenelse false = 0 , n ∷ snd (compare-before-cons ns)
+
+    cons-before-compare : List Nat → Nat × List Nat
+    cons-before-compare [] = 0 , []
+    cons-before-compare (n ∷ ns) = let foo = cons-before-compare ns in suc (length (snd foo)) , (if n < 50 then suc n else n) ∷ snd foo where
+      if_then_else_ : Bool → Nat → Nat → Nat
+      if true  then t else e = t
+      if false then t else e = e
+
+    foo : Nat → List Nat → (List Nat → Nat × List Nat) → Nat
+    foo 0 [] _ = 0
+    foo 0 (x ∷ xs) _ = x
+    foo (suc n) xs f
+     with f xs
+    ... | (_ , fxs) = foo n fxs f
+
+    run-foo : (List Nat → Nat × List Nat) → Nat
+    run-foo = foo 100 (0 ∷ [])
+
+    compare-before-cons-is-fast : run-foo compare-before-cons ≡ 50
+    compare-before-cons-is-fast = {!!} -- C-u C-u C-c C-,
+
+    cons-before-compare-is-slow : run-foo cons-before-compare ≡ 50
+    cons-before-compare-is-slow = {!refl!} -- C-u C-u C-c C-,
 
   module before-and-after-vec-head where
     -- try putting the head element in the type, defaulting to 0
