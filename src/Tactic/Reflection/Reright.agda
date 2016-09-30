@@ -211,19 +211,85 @@ module Tactic.Reflection.Reright where
           go _ [] ns = ns
           go j (i ∷ is) ns = go (suc j) is $ (1 + |l| + 2 + (length Γ - 1) - i , 1 + (|l| - 1) - j) ∷ ns
 -}
+
+
+
+
+      {-
+      something : Nat × List (Arg Type × Nat)
+      something = (0 , go 0 0 [] Γ) where
+          go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+          go _ _ _ [] = []
+          go i j osⱼ (γ ∷ γs) =
+            let n = length Γ - 1
+                L' = weaken (2 + j) L
+                γ' = weaken ((n - i) + 3 + j) γ
+                w' = var₀ (suc j)
+                γ'[w'/L'] = γ' r[ w' / L' ]
+                γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+                γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+            in
+            if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+              (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+            else
+              go (suc i) j (weakenOrder osⱼ) γs
+      -}
+
+-- TODO: Using this first "something" makes it slow to evaluate ` 𝐺[w/L] ...
+      {-
+      something  : Nat × List (Arg Type × Nat)
+      something = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → Nat × List (Arg Type × Nat)
+        go _ _ _ [] = 0 , []
+        go i j osⱼ (γ ∷ γs) with length Γ - 1
+        ... | n with weaken (2 + j) L
+        ... | L' with weaken ((n - i) + 3 + j) γ
+        ... | γ' with (let w' = var₀ (suc j)
+                       in let γ'[w'/L'] = γ' r[ w' / L' ]
+                       in reorderVars osⱼ <$> γ'[w'/L'])
+        ... | γ'[w'/L'][reordered] with (let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                                         in let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+                                         in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
+        ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (suc (length (snd foo)) , (γ'[w'/L'][reordered] , i) ∷ snd foo)
+        ... | false = go (suc i) j (weakenOrder osⱼ) γs
+      -}
+-- ... but this second "something" makes it fast. Why?
+      something  : Nat × List (Arg Type × Nat)
+      something = let asdf = go 0 0 [] Γ in (length asdf , asdf) where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ [] = []
+        go i j osⱼ (γ ∷ γs) with length Γ - 1
+        ... | n with weaken (2 + j) L
+        ... | L' with weaken ((n - i) + 3 + j) γ
+        ... | γ' with (let w' = var₀ (suc j)
+                       in let γ'[w'/L'] = γ' r[ w' / L' ]
+                       in reorderVars osⱼ <$> γ'[w'/L'])
+        ... | γ'[w'/L'][reordered] with (let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                                         in let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+                                         in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
+        ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (γ'[w'/L'][reordered] , i) ∷ foo
+        ... | false = go (suc i) j (weakenOrder osⱼ) γs
+
+
       everything : List (Arg Type × Nat) × Type
-      everything with Γ[w/L]×indexes[Γ]'
-      ... | (_ , Γw) with fst <$> Γw
-      ... | biggies with length biggies
+      everything
+       with something
+      ... | (_ , Γw)
+       with fst <$> Γw
+      ... | biggies
+       with length biggies
       ... | |l| = Γw , 𝐺[w/L]
         where
         𝐺[w/L] : Type
         𝐺[w/L] with 2 + |l| | 3 + |l|
         ... | l | r =
           let
-              LL = length (fst <$> Γw) -- l
+              LL = 2 + |l|
+                   -- length (fst <$> Γw) -- l
+                   --length (fst <$> (snd Γ[w/L]×indexes[Γ]'))
               os = go 0 (snd <$> Γw) []
-              𝐺' = (weaken (3 + LL) 𝐺) r[ var₀ LL / weaken r L ]
+              𝐺' = (weaken (3 + |l|) 𝐺) r[ var₀ LL / weaken r L ]
                    --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
                    --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
                    --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
@@ -240,9 +306,16 @@ module Tactic.Reflection.Reright where
       Γ[w/L] = fst <$> (fst everything)
 
       indexes[Γ] : List Nat
-      indexes[Γ] = snd <$> (fst everything)
+      --indexes[Γ] = snd <$> (fst everything)
+      indexes[Γ] with everything
+      ... | (ind , _) = snd <$> ind
 
-      ∣Γᴸ∣ = length Γ[w/L]
+      ∣Γᴸ∣ : Nat
+      ∣Γᴸ∣ with Γ[w/L]×indexes[Γ]'
+      ... | things with things
+      ... | (_ , stuff) with length stuff
+      ... | l = l
+      --∣Γᴸ∣ = length Γ[w/L]
 
       𝐺[w/L] : Type
       𝐺[w/L] = snd everything
@@ -292,12 +365,22 @@ module Tactic.Reflection.Reright where
          n = ∣Γᴸ∣ - 1 = length Γ[w/L] - 1
       -}
       Γ[R/L] : List (Arg Type)
-      Γ[R/L] = go 0 Γ[w/L] where
+      Γ[R/L] with Γ[w/L]×indexes[Γ]'
+      ... | things with things
+      ... | (_ , stuff) with length stuff
+      ... | ∣Γᴸ∣ = go 0 Γ[w/L] where
+{-
+      Γ[R/L] {-with length (snd Γ[w/L]×indexes[Γ]')
+      ... | ∣Γᴸ∣-} = go 0 Γ[w/L] where
+-}
         go : Nat → List (Arg Type) → List (Arg Type)
         go _ [] = []
         go i (γ ∷ γs) =
           -- γ is the index[γ]ᵗʰ element of Γ[w/L]
-          let n = ∣Γᴸ∣ - 1
+          let ∣Γᴸ∣ = length stuff
+              --∣Γᴸ∣ = length (snd things)
+              --∣Γᴸ∣ = case things of λ { (_ , asdf) → length asdf }
+              n = ∣Γᴸ∣ - 1
               γ' = weakenFrom i ∣Γᴸ∣ γ
               w' = var₀ (i + n + 2)
               R' = weaken (2 + ∣Γᴸ∣ + i) R
@@ -310,7 +393,10 @@ module Tactic.Reflection.Reright where
          0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
       -}
       𝐺[R/L] : Type
-      𝐺[R/L] =
+      𝐺[R/L] with Γ[w/L]×indexes[Γ]'
+      ... | things with things
+      ... | (_ , stuff) with length stuff
+      ... | ∣Γᴸ∣ =
         let os = go 0 indexes[Γ] []
             𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
         in
@@ -356,6 +442,249 @@ module Tactic.Reflection.Reright where
         go _ [] ns = ns
         go j (i ∷ is) ns = go (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
 -}
+
+
+
+{-
+      [Γ[w/L]×indexes[Γ]]  : List (Arg Type × Nat)
+      [Γ[w/L]×indexes[Γ]] = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ [] = []
+        go i j osⱼ (γ ∷ γs) =
+          let n = length Γ - 1
+              L' = weaken (2 + j) L
+              γ' = weaken ((n - i) + 3 + j) γ
+              w' = var₀ (suc j)
+              γ'[w'/L'] = γ' r[ w' / L' ]
+              γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+              γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+              γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+          in
+          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+          else
+            go (suc i) j (weakenOrder osⱼ) γs
+
+      [Γ[w/L]] : List (Arg Type)
+      [Γ[w/L]] = fst <$> [Γ[w/L]×indexes[Γ]]
+
+      [indexes[Γ]] : List Nat
+      [indexes[Γ]] = snd <$> [Γ[w/L]×indexes[Γ]]
+
+      [|Γᴸ∣] : Nat
+      [|Γᴸ∣] = length [Γ[w/L]]
+{-
+      [𝐺[w/L]] : Type
+      [𝐺[w/L]] =
+        let os = go 0 [indexes[Γ]] []
+            𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+        in
+          reorderVars os 𝐺'
+        where
+
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+-}
+      [𝐺[w/L]] : Type
+      [𝐺[w/L]] with [Γ[w/L]×indexes[Γ]]
+      ... | [Γ[w/L]×indexes[Γ]] with fst <$> [Γ[w/L]×indexes[Γ]] | snd <$> [Γ[w/L]×indexes[Γ]]
+      ... | [Γ[w/L]] | [indexes[Γ]] with length [Γ[w/L]]
+      ... | [|Γᴸ∣] =
+        let os = go 0 [indexes[Γ]] []
+            𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+        in
+          reorderVars os 𝐺'
+        where
+
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+-}
+
+{-
+      record ALLOFIT : Set where
+        [Γ[w/L]×indexes[Γ]] : List (Arg Type × Nat)
+        [Γ[w/L]×indexes[Γ]] = go 0 0 [] Γ where
+          go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+          go _ _ _ [] = []
+          go i j osⱼ (γ ∷ γs) =
+            let n = length Γ - 1
+                L' = weaken (2 + j) L
+                γ' = weaken ((n - i) + 3 + j) γ
+                w' = var₀ (suc j)
+                γ'[w'/L'] = γ' r[ w' / L' ]
+                γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+                γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+            in
+            if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+              (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+            else
+              go (suc i) j (weakenOrder osⱼ) γs
+
+        [Γ[w/L]] : List (Arg Type)
+        [Γ[w/L]] = fst <$> [Γ[w/L]×indexes[Γ]]
+{-
+        [Γ[w/L]] : List (Arg Type)
+        [Γ[w/L]] = fst <$> [Γ[w/L]×indexes[Γ]]
+-}
+
+        [indexes[Γ]] : List Nat
+        [indexes[Γ]] = snd <$> [Γ[w/L]×indexes[Γ]]
+
+        [|Γᴸ∣] : Nat
+        [|Γᴸ∣] = length [Γ[w/L]]
+  {-
+        [𝐺[w/L]] : Type
+        [𝐺[w/L]] =
+          let os = go 0 [indexes[Γ]] []
+              𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+          in
+            reorderVars os 𝐺'
+          where
+
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+  -}
+        [𝐺[w/L]] : Type
+        [𝐺[w/L]] with [Γ[w/L]×indexes[Γ]]
+        ... | [Γ[w/L]×indexes[Γ]] with fst <$> [Γ[w/L]×indexes[Γ]] | snd <$> [Γ[w/L]×indexes[Γ]]
+        ... | [Γ[w/L]] | [indexes[Γ]] with length [Γ[w/L]]
+        ... | [|Γᴸ∣] =
+          let os = go 0 [indexes[Γ]] []
+              𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+          in
+            reorderVars os 𝐺'
+          where
+
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+
+      open ALLOFIT record {} public
+-}
+
+      record ALLOFIT : Set where
+        inductive
+        field
+          [Γ[w/L]×indexes[Γ]] : List (Arg Type × Nat)
+          [Γ[w/L]] : List (Arg Type)
+          [indexes[Γ]] : List Nat
+          [|Γᴸ∣] : Nat
+          [𝐺[w/L]] : Type
+
+      itsme : ALLOFIT
+      ALLOFIT.[Γ[w/L]×indexes[Γ]] itsme = go 0 0 [] Γ where
+          go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+          go _ _ _ [] = []
+          go i j osⱼ (γ ∷ γs) =
+            let n = length Γ - 1
+                L' = weaken (2 + j) L
+                γ' = weaken ((n - i) + 3 + j) γ
+                w' = var₀ (suc j)
+                γ'[w'/L'] = γ' r[ w' / L' ]
+                γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+                γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+            in
+            if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+              (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+            else
+              go (suc i) j (weakenOrder osⱼ) γs
+      ALLOFIT.[Γ[w/L]] itsme = fst <$> ALLOFIT.[Γ[w/L]×indexes[Γ]] itsme
+      ALLOFIT.[indexes[Γ]] itsme = snd <$> ALLOFIT.[Γ[w/L]×indexes[Γ]] itsme
+      ALLOFIT.[|Γᴸ∣] itsme = length (ALLOFIT.[Γ[w/L]] itsme)
+      ALLOFIT.[𝐺[w/L]] itsme
+       with ALLOFIT.[Γ[w/L]×indexes[Γ]] itsme
+      ... | [Γ[w/L]×indexes[Γ]]
+       with fst <$> [Γ[w/L]×indexes[Γ]] | snd <$> [Γ[w/L]×indexes[Γ]]
+      ... | [Γ[w/L]] | [indexes[Γ]]
+       with length [Γ[w/L]]
+      ... | [|Γᴸ∣] =
+{-
+      ALLOFIT.[𝐺[w/L]] itsme with ALLOFIT.[|Γᴸ∣] itsme
+      ... | [|Γᴸ∣] =
+-}
+        --let os = go 0 (snd <$> [Γ[w/L]×indexes[Γ]]) []
+        let os = go 0 [indexes[Γ]] []
+            --[|Γᴸ∣] = ALLOFIT.[|Γᴸ∣] itsme
+            𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ] --
+        in
+          reorderVars os 𝐺'
+        where
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+        go _ [] ns = ns
+        go j (i ∷ is) ns =
+          --let [|Γᴸ∣] = ALLOFIT.[|Γᴸ∣] itsme
+          --in
+          go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+
+{-
+        [Γ[w/L]×indexes[Γ]] : List (Arg Type × Nat)
+        [Γ[w/L]×indexes[Γ]] = go 0 0 [] Γ where
+          go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+          go _ _ _ [] = []
+          go i j osⱼ (γ ∷ γs) =
+            let n = length Γ - 1
+                L' = weaken (2 + j) L
+                γ' = weaken ((n - i) + 3 + j) γ
+                w' = var₀ (suc j)
+                γ'[w'/L'] = γ' r[ w' / L' ]
+                γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+                γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+            in
+            if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+              (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+            else
+              go (suc i) j (weakenOrder osⱼ) γs
+
+        [Γ[w/L]] : List (Arg Type)
+        [Γ[w/L]] = fst <$> [Γ[w/L]×indexes[Γ]]
+{-
+        [Γ[w/L]] : List (Arg Type)
+        [Γ[w/L]] = fst <$> [Γ[w/L]×indexes[Γ]]
+-}
+
+        [indexes[Γ]] : List Nat
+        [indexes[Γ]] = snd <$> [Γ[w/L]×indexes[Γ]]
+
+        [|Γᴸ∣] : Nat
+        [|Γᴸ∣] = length [Γ[w/L]]
+  {-
+        [𝐺[w/L]] : Type
+        [𝐺[w/L]] =
+          let os = go 0 [indexes[Γ]] []
+              𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+          in
+            reorderVars os 𝐺'
+          where
+
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+  -}
+        [𝐺[w/L]] : Type
+        [𝐺[w/L]] with [Γ[w/L]×indexes[Γ]]
+        ... | [Γ[w/L]×indexes[Γ]] with fst <$> [Γ[w/L]×indexes[Γ]] | snd <$> [Γ[w/L]×indexes[Γ]]
+        ... | [Γ[w/L]] | [indexes[Γ]] with length [Γ[w/L]]
+        ... | [|Γᴸ∣] =
+          let os = go 0 [indexes[Γ]] []
+              𝐺' = (weaken (3 + [|Γᴸ∣]) 𝐺) r[ var₀ (2 + [|Γᴸ∣]) / weaken (3 + [|Γᴸ∣]) L ]
+          in
+            reorderVars os 𝐺'
+          where
+
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + [|Γᴸ∣] + 2 + (length Γ - 1) - i , 1 + ([|Γᴸ∣] - 1) - j) ∷ ns
+-}
+      open ALLOFIT itsme public
+
+
+
       w : Arg Type
       w = hArg A
 
@@ -398,16 +727,29 @@ module Tactic.Reflection.Reright where
                   strErr "\nR:"              ∷ termErr (` R)                    ∷
                   strErr "\nΓ:"              ∷ termErr (` Γ)                    ∷
                   strErr "\nlength Γ:"       ∷ termErr (` (length Γ))           ∷
-                  strErr "\n𝐺:"              ∷ termErr (` 𝐺)                    ∷
+                  strErr "\n𝐺:"              ∷ termErr (` 𝐺)                   ∷
+
+                  --strErr "\nΓ[w/L]:"         ∷ termErr (` [Γ[w/L]])               ∷
+                  --strErr "\nindexes[Γ]:"     ∷ termErr (` [indexes[Γ]])           ∷
+                  --strErr "\n∣Γᴸ∣:"           ∷ termErr (` [|Γᴸ∣])                 ∷
+                  --strErr "\n𝐺[w/L]:"         ∷ termErr (` [𝐺[w/L]])               ∷
+
+
+                  strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
+                  --strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
+                  --strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
+                  strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
+
+
+                  {-
                   strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
                   strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
                   strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
-                  --strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
-                  --strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
+                  strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
+                  strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
                   strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
                   strErr "\nw:"              ∷ termErr (` w)                    ∷
                   strErr "\nw≡R:"            ∷ termErr (` w≡R)                  ∷
-                  {-
                   strErr "helper-type:"      ∷ termErr helper-type              ∷
                   strErr "helper-patterns:"  ∷ termErr (` helper-patterns)      ∷
                   strErr "helper-term:"      ∷ termErr (` helper-term)          ∷
