@@ -7,41 +7,37 @@ module Tactic.Reflection.Reright where
   open import Tactic.Reflection.Quote
 
   private
-    weakenList : List Nat → List Nat
-    weakenList [] = []
---    weakenList (x ∷ xs) = (if ((_<?_ $! x) $! 0) then x else suc x) ∷ weakenList xs
-
-    weakenList (x ∷ xs) with x <? 0
-    ... | true = x ∷ weakenList xs
-    ... | false = (suc x) ∷ weakenList xs
-
-    weakenList' : List Nat → List Nat
-    weakenList' [] = []
-    weakenList' (x ∷ xs) with x <? 0
-    ... | true = x ∷ weakenList' xs
-    ... | false = (x + 1) ∷ weakenList' xs
-
-    weakenList'' : List Nat → List Nat
-    weakenList'' [] = []
-    weakenList'' (x ∷ xs) = (if x <? 0 then x else suc x) ∷ weakenList xs
-
     weakenOrder : List (Nat × Nat) → List (Nat × Nat)
     weakenOrder [] = []
     weakenOrder ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenOrder xs
-
-    orderingToReplacement : List Nat → List (Nat × Nat)
-    orderingToReplacement xs = go 0 xs where
-      go : Nat → List Nat → List (Nat × Nat)
-      go n [] = []
-      go n (x ∷ xs) with n == x
-      ... | yes _ = go (suc n) xs
-      ... | no _ = (n , x) ∷ go (suc n) xs
 
     replaceVar : Nat → List (Nat × Nat) → Nat → Nat
     replaceVar d [] x = x
     replaceVar d ((x-d , n-d) ∷ xns) x with x == x-d + d
     ... | yes _ = n-d + d
     ... | no _ = replaceVar d xns x
+
+    reorderVars' : Nat → Nat → List (Nat × Nat) → Term → Term
+    reorderVars' 0 _ _ x = x
+    reorderVars' (suc n) d [] (var x args) = var x (fmap (reorderVars' n d []) <$> args)
+    reorderVars' (suc n) d ((x-d , n-d) ∷ xns) (var x args) with x == x-d + d
+    ... | yes _ = var (n-d + d) (fmap (reorderVars' n d xns) <$> args)
+    ... | no _ = reorderVars' (suc n) d xns (var x args)
+    reorderVars' (suc n) d xns (con c args) = con c ((fmap ∘ fmap) (reorderVars' n d xns) args)
+    reorderVars' (suc n) d xns (def f args) = def f (fmap (reorderVars' n d xns) <$> args)
+    reorderVars' (suc n) d xns (lam v t) = lam v (reorderVars' n (suc d) xns <$> t)
+    reorderVars' (suc n) d xns (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n d xns) cs) ((fmap ∘ fmap) (reorderVars' n d xns) args) where
+      reorderVars'InClause : Nat → Nat → List (Nat × Nat) → Clause → Clause -- TODO reorder patterns?
+      reorderVars'InClause n d xns (clause ps t) = (clause ps (reorderVars' n d xns t))
+      reorderVars'InClause n d xns (absurd-clause ps) = (absurd-clause ps)
+    reorderVars' (suc n) d xns (pi a b) = pi (reorderVars' n d xns <$> a) (reorderVars' n (suc d) xns <$> b)
+    reorderVars' (suc n) d xns (agda-sort (set t)) = agda-sort (set (reorderVars' n d xns t))
+    reorderVars' (suc n') d xns (agda-sort (lit n)) = agda-sort (lit n')
+    reorderVars' (suc n) d xns (agda-sort unknown) = agda-sort unknown
+    reorderVars' (suc n) d xns (lit l) = lit l
+    reorderVars' (suc n) d xns (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n d xns) args
+    reorderVars' (suc n) d xns unknown = unknown
+
 {-
     reorderVars' : Nat → Nat → List (Nat × Nat) → Term → Term
     reorderVars' 0 _ _ x = x
@@ -60,127 +56,9 @@ module Tactic.Reflection.Reright where
     reorderVars' (suc n) d xns (lit l) = lit l
     reorderVars' (suc n) d xns (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n d xns) args
     reorderVars' (suc n) d xns unknown = unknown
-
-    reorderVars-fast : List (Nat × Nat) → Term → Term
-    reorderVars-fast xs t = reorderVars' 99 0 xs t
-
-    reorderVars-slow : List Nat → Term → Term
-    reorderVars-slow xs t = reorderVars' 99 0 (orderingToReplacement xs) t
 -}
-
-  {-
-    reorderVars' : Nat → List Nat → Term → Term
-    reorderVars' _ _ x = x -- maybe unknown id (strengthen 1 (weaken 1 x))
-  -}
-
-    reorderVars' : Nat → List Nat → Term → Term
-    reorderVars' 0 _ x = x
-    reorderVars' (suc n) xs (var x args) = var (maybe x id (index xs x)) (fmap (reorderVars' n xs) <$> args)
-    reorderVars' (suc n) xs (con c args) = con c ((fmap ∘ fmap) (reorderVars' n xs) args)
-    reorderVars' (suc n) xs (def f args) = def f (fmap (reorderVars' n xs) <$> args)
-    reorderVars' (suc n) xs (lam v t) = lam v (reorderVars' n (0 ∷ weaken 1 xs) <$> t)
-    reorderVars' (suc n) xs (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n xs) cs) ((fmap ∘ fmap) (reorderVars' n xs) args) where
-      reorderVars'InClause : Nat → List Nat → Clause → Clause -- TODO reorder patterns?
-      reorderVars'InClause n xs (clause ps t) = (clause ps (reorderVars' n xs t))
-      reorderVars'InClause n xs (absurd-clause ps) = (absurd-clause ps)
-    reorderVars' (suc n) xs (pi a b) = pi (reorderVars' n xs <$> a) (reorderVars' n (0 ∷ weaken 1 xs) <$> b)
-    reorderVars' (suc n) xs (agda-sort (set t)) = agda-sort (set (reorderVars' n xs t))
-    reorderVars' (suc n') xs (agda-sort (lit n)) = agda-sort (lit n')
-    reorderVars' (suc n) xs (agda-sort unknown) = agda-sort unknown
-    reorderVars' (suc n) xs (lit l) = lit l
-    reorderVars' (suc n) xs (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n xs) args
-    reorderVars' (suc n) xs unknown = unknown
-
-    reorderVars-slow : List Nat → Term → Term
-    reorderVars-slow xs t = reorderVars' 99 xs t
-
-{-
-    reorderVars' : Nat → Term → Term
-    reorderVars' 0 x = x
-    reorderVars' (suc n) (var x args) = var x (fmap (reorderVars' n) <$> args)
-    reorderVars' (suc n) (con c args) = con c ((fmap ∘ fmap) (reorderVars' n) args)
-    reorderVars' (suc n) (def f args) = def f (fmap (reorderVars' n) <$> args)
-    reorderVars' (suc n) (lam v t) = lam v (reorderVars' n <$> t)
-    reorderVars' (suc n) (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n) cs) ((fmap ∘ fmap) (reorderVars' n) args) where
-      reorderVars'InClause : Nat → Clause → Clause -- TODO reorder patterns?
-      reorderVars'InClause n (clause ps t) = (clause ps (reorderVars' n t))
-      reorderVars'InClause n (absurd-clause ps) = (absurd-clause ps)
-    reorderVars' (suc n) (pi a b) = pi (reorderVars' n <$> a) (reorderVars' n <$> b)
-    reorderVars' (suc n) (agda-sort (set t)) = agda-sort (set (reorderVars' n t))
-    reorderVars' (suc n') (agda-sort (lit n)) = agda-sort (lit n')
-    reorderVars' (suc n) (agda-sort unknown) = agda-sort unknown
-    reorderVars' (suc n) (lit l) = lit l
-    reorderVars' (suc n) (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n) args
-    reorderVars' (suc n) unknown = unknown
--}
-{-
-    reorderVars' : Nat → List Nat → Term → Term
-    reorderVars' 0 _ x = x
-    reorderVars' (suc n) [] (var x args) = var x (fmap (reorderVars' n []) <$> args)
-    reorderVars' (suc n) (x' ∷ xs') (var x args) = var x' (fmap (reorderVars' n (x' ∷ xs')) <$> args)
-    reorderVars' (suc n) xs (con c args) = con c ((fmap ∘ fmap) (reorderVars' n xs) args)
-    reorderVars' (suc n) xs (def f args) = def f (fmap (reorderVars' n xs) <$> args)
-    reorderVars' (suc n) xs (lam v t) = lam v (reorderVars' n (0 ∷ weaken 1 xs) <$> t)
-    reorderVars' (suc n) xs (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n xs) cs) ((fmap ∘ fmap) (reorderVars' n xs) args) where
-      reorderVars'InClause : Nat → List Nat → Clause → Clause -- TODO reorder patterns?
-      reorderVars'InClause n xs (clause ps t) = (clause ps (reorderVars' n xs t))
-      reorderVars'InClause n xs (absurd-clause ps) = (absurd-clause ps)
-    reorderVars' (suc n) xs (pi a b) = pi (reorderVars' n xs <$> a) (reorderVars' n (0 ∷ weaken 1 xs) <$> b)
-    reorderVars' (suc n) xs (agda-sort (set t)) = agda-sort (set (reorderVars' n xs t))
-    reorderVars' (suc n') xs (agda-sort (lit n)) = agda-sort (lit n')
-    reorderVars' (suc n) xs (agda-sort unknown) = agda-sort unknown
-    reorderVars' (suc n) xs (lit l) = lit l
-    reorderVars' (suc n) xs (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n xs) args
-    reorderVars' (suc n) xs unknown = unknown
--}
-{-
-    reorderVars' : Nat → List Nat → Term → Term
-    reorderVars' 0 _ x = x
-    reorderVars' (suc n) xs (var x args) = var (length xs) (fmap (reorderVars' n xs) <$> args)
-    reorderVars' (suc n) xs (con c args) = con c ((fmap ∘ fmap) (reorderVars' n xs) args)
-    reorderVars' (suc n) xs (def f args) = def f (fmap (reorderVars' n xs) <$> args)
-    reorderVars' (suc n) xs (lam v t) = lam v (reorderVars' n (0 ∷ weaken 1 xs) <$> t)
-    reorderVars' (suc n) xs (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n xs) cs) ((fmap ∘ fmap) (reorderVars' n xs) args) where
-      reorderVars'InClause : Nat → List Nat → Clause → Clause -- TODO reorder patterns?
-      reorderVars'InClause n xs (clause ps t) = (clause ps (reorderVars' n xs t))
-      reorderVars'InClause n xs (absurd-clause ps) = (absurd-clause ps)
-    reorderVars' (suc n) xs (pi a b) = pi (reorderVars' n xs <$> a) (reorderVars' n (0 ∷ weaken 1 xs) <$> b)
-    reorderVars' (suc n) xs (agda-sort (set t)) = agda-sort (set (reorderVars' n xs t))
-    reorderVars' (suc n') xs (agda-sort (lit n)) = agda-sort (lit n')
-    reorderVars' (suc n) xs (agda-sort unknown) = agda-sort unknown
-    reorderVars' (suc n) xs (lit l) = lit l
-    reorderVars' (suc n) xs (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n xs) args
-    reorderVars' (suc n) xs unknown = unknown
--}
-    {-
-    --{-# TERMINATING #-}
-    reorderVars : List Nat → Term → Term
-    reorderVars xs t = reorderVars' 99 xs t
-    -}
-    {-
-    reorderVars xs (var x args) = var (maybe x id (index xs x)) (fmap (reorderVars xs) <$> args)
-    reorderVars xs (con c args) = con c ((fmap ∘ fmap) (reorderVars xs) args)
-    reorderVars xs (def f args) = def f (fmap (reorderVars xs) <$> args)
-    reorderVars xs (lam v t) = lam v (reorderVars (0 ∷ weaken 1 xs) <$> t)
-    reorderVars xs (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause xs) cs) ((fmap ∘ fmap) (reorderVars xs) args) where
-      reorderVarsInClause : List Nat → Clause → Clause -- TODO reorder patterns?
-      reorderVarsInClause xs (clause ps t) = (clause ps (reorderVars xs t))
-      reorderVarsInClause xs (absurd-clause ps) = (absurd-clause ps)
-    reorderVars xs (pi a b) = pi (reorderVars xs <$> a) (reorderVars (0 ∷ weaken 1 xs) <$> b)
-    reorderVars xs (agda-sort (set t)) = agda-sort (set (reorderVars xs t))
-    reorderVars xs (agda-sort (lit n)) = agda-sort (lit n)
-    reorderVars xs (agda-sort unknown) = agda-sort unknown
-    reorderVars xs (lit l) = lit l
-    reorderVars xs (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars xs) args
-    reorderVars xs unknown = unknown
-    -}
-
-    -- replace the iᵗʰ element of xs with the value y
-    setElem : Nat → ∀ {a} {A : Set a} → A → List A → List A
-    setElem i y xs =
-      let xs' = splitAt i xs
-      in
-      fst xs' ++ (y ∷ drop 1 (snd xs'))
+    reorderVars : List (Nat × Nat) → Term → Term
+    reorderVars xs t = reorderVars' 99 0 xs t
 
     record Request : Set where
       field
@@ -199,8 +77,8 @@ module Tactic.Reflection.Reright where
       -}
       {-
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
-      Γ[w/L]×indexes[Γ] = go 0 0 (from 0 for (length Γ + 2)) Γ where
-        go : Nat → Nat → List Nat → List (Arg Type) → List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
         go _ _ _ [] = []
         go i j osⱼ (γ ∷ γs) =
           let n = length Γ - 1
@@ -208,44 +86,15 @@ module Tactic.Reflection.Reright where
               γ' = weaken ((n - i) + 3 + j) γ
               w' = var₀ (suc j)
               γ'[w'/L'] = γ' r[ w' / L' ]
-              γ'[w'/L'][reordered] = reorderVars-fast (orderingToReplacement osⱼ) <$> γ'[w'/L']
+              γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
               γ≢l≡r = isNo $ var₀ (n - i) == l≡r
               γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
           in
-          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then (
-            let --osⱼ′ = splitAt (j + 3 + n - i) (0 ∷ weaken 1 osⱼ)
-                --osⱼ₊₁ = fst osⱼ′ ++ (0 ∷ drop 1 (snd osⱼ′))
-                osⱼ₊₁ = 0 ∷ weaken 1 osⱼ
-            in
-            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) osⱼ₊₁ γs
-          ) else
-            go (suc i) j (0 ∷ weaken 1 osⱼ) γs
+          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+          else
+            go (suc i) j (weakenOrder osⱼ) γs
       -}
-      {-
-      Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
-      Γ[w/L]×indexes[Γ] = go 0 0 (from 0 for (length Γ + 2)) Γ where
-        go : Nat → Nat → List Nat → List (Arg Type) → List (Arg Type × Nat)
-        go _ _ _ [] = []
-        go i j osⱼ (γ ∷ γs) =
-          (reorderVars-fast (orderingToReplacement osⱼ) <$> γ , i) ∷ go (suc i) j (0 ∷ weaken 1 osⱼ) γs
-      -}
-
-      {-
-      Γ[w/L]'  : List (Arg Type)
-      Γ[w/L]' = go (from 0 for (length Γ + 2)) Γ where
-        go : List Nat → List (Arg Type) → List (Arg Type)
-        go _ [] = []
-        go osⱼ (γ ∷ γs) =
-          (reorderVars-fast (orderingToReplacement osⱼ) <$> γ) ∷ (go (0 ∷ (weaken 1 osⱼ)) γs)
-      -}
-
-      Γ[w/L]'  : List (Arg Type)
-      Γ[w/L]' = go (from 0 for (length Γ + 2)) Γ where
-        go : List Nat → List (Arg Type) → List (Arg Type)
-        go _ [] = []
-        go osⱼ (γ ∷ γs) =
-          (reorderVars-slow osⱼ <$> γ) ∷ (go (0 ∷ (weakenList'' osⱼ)) γs)
-
       {-
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
       Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
@@ -257,28 +106,184 @@ module Tactic.Reflection.Reright where
               γ' = weaken ((n - i) + 3 + j) γ
               w' = var₀ (suc j)
               γ'[w'/L'] = γ' r[ w' / L' ]
-              γ'[w'/L'][reordered] = reorderVars-fast osⱼ <$> γ'[w'/L']
+              γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
               γ≢l≡r = isNo $ var₀ (n - i) == l≡r
               γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
           in
-          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
-            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ (weakenOrder osⱼ)) γs
-          else
-            go (suc i) j (weakenOrder osⱼ) γs
+          case γ≢l≡r && γ'≠γ'[w'/L'][reordered] of λ {
+            true → (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+          ; false → go (suc i) j (weakenOrder osⱼ) γs }
       -}
 
       {-
+      Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ [] = []
+        go i j osⱼ (γ ∷ γs) with length Γ - 1
+        ... | n with weaken (2 + j) L
+        ... | L' with weaken ((n - i) + 3 + j) γ
+        ... | γ' with (let w' = var₀ (suc j)
+                       in let γ'[w'/L'] = γ' r[ w' / L' ]
+                       in reorderVars osⱼ <$> γ'[w'/L'])
+        ... | γ'[w'/L'][reordered] with (let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                                         in let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+                                         in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
+        ... | true = (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+        ... | false = go (suc i) j (weakenOrder osⱼ) γs
+
       Γ[w/L] : List (Arg Type)
-      Γ[w/L] = fst <$> Γ[w/L]×indexes[Γ]
-      --Γ[w/L] = vArg unknown ∷ []
+      Γ[w/L] = fst <$> (Γ[w/L]×indexes[Γ])
 
       indexes[Γ] : List Nat
-      indexes[Γ] = snd <$> Γ[w/L]×indexes[Γ]
-      --indexes[Γ] = 30 ∷ []
+      indexes[Γ] = snd <$> (Γ[w/L]×indexes[Γ])
 
       ∣Γᴸ∣ = length Γ[w/L]
       -}
+
+      Γ[w/L]×indexes[Γ]'  : Nat × List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ]' = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → Nat × List (Arg Type × Nat)
+        go _ _ _ [] = 0 , []
+        go i j osⱼ (γ ∷ γs) with length Γ - 1
+        ... | n with weaken (2 + j) L
+        ... | L' with weaken ((n - i) + 3 + j) γ
+        ... | γ' with (let w' = var₀ (suc j)
+                       in let γ'[w'/L'] = γ' r[ w' / L' ]
+                       in reorderVars osⱼ <$> γ'[w'/L'])
+        ... | γ'[w'/L'][reordered] with (let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                                         in let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+                                         in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
+        ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (suc (length (snd foo)) , (γ'[w'/L'][reordered] , i) ∷ snd foo)
+        ... | false = go (suc i) j (weakenOrder osⱼ) γs
+
+      Γ[w/L]×indexes[Γ] : List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ] = snd Γ[w/L]×indexes[Γ]'
 {-
+      everything : List (Arg Type × Nat) × Type
+      everything with Γ[w/L]×indexes[Γ]'
+      ... | (|l| , Γw) = Γw , 𝐺[w/L]
+        where
+        𝐺[w/L] : Type
+        𝐺[w/L] with 2 + |l| | 3 + |l|
+        ... | l | r =
+          let
+              LL = length (fst <$> Γw) -- l
+              os = go 0 (snd <$> Γw) []
+              𝐺' = (weaken (3 + LL) 𝐺) r[ var₀ LL / weaken r L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                   --𝐺 r[ var₀ 0 / L ]
+          in
+            reorderVars os 𝐺'
+          where
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + |l| + 2 + (length Γ - 1) - i , 1 + (|l| - 1) - j) ∷ ns
+-}
+{-
+      |l| = fst Γ[w/L]×indexes[Γ]'
+      Γw = snd Γ[w/L]×indexes[Γ]'
+      biggies = fst <$> Γw
+      sizeofit = length biggies
+
+      everything : List (Arg Type × Nat) × Type
+      everything = Γw , 𝐺[w/L]
+        where
+        𝐺[w/L] : Type
+        𝐺[w/L] with 2 + |l| | 3 + |l|
+        ... | l | r =
+          let
+              LL = sizeofit -- length (fst <$> Γw) -- l
+              os = go 0 (snd <$> Γw) []
+              𝐺' = (weaken (3 + LL) 𝐺) r[ var₀ LL / weaken r L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                   --𝐺 r[ var₀ 0 / L ]
+          in
+            reorderVars os 𝐺'
+          where
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + |l| + 2 + (length Γ - 1) - i , 1 + (|l| - 1) - j) ∷ ns
+-}
+      everything : List (Arg Type × Nat) × Type
+      everything with Γ[w/L]×indexes[Γ]'
+      ... | (_ , Γw) with fst <$> Γw
+      ... | biggies with length biggies
+      ... | |l| = Γw , 𝐺[w/L]
+        where
+        𝐺[w/L] : Type
+        𝐺[w/L] with 2 + |l| | 3 + |l|
+        ... | l | r =
+          let
+              LL = length (fst <$> Γw) -- l
+              os = go 0 (snd <$> Γw) []
+              𝐺' = (weaken (3 + LL) 𝐺) r[ var₀ LL / weaken r L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                   --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                   --𝐺 r[ var₀ 0 / L ]
+          in
+            reorderVars os 𝐺'
+          where
+          go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+          go _ [] ns = ns
+          go j (i ∷ is) ns = go (suc j) is $ (1 + |l| + 2 + (length Γ - 1) - i , 1 + (|l| - 1) - j) ∷ ns
+
+      Γ[w/L] : List (Arg Type)
+      Γ[w/L] = fst <$> (fst everything)
+
+      indexes[Γ] : List Nat
+      indexes[Γ] = snd <$> (fst everything)
+
+      ∣Γᴸ∣ = length Γ[w/L]
+
+      𝐺[w/L] : Type
+      𝐺[w/L] = snd everything
+
+{-
+      Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
+      Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
+        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → (Maybe (Maybe (Arg Type × Nat)) → Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ [] = []
+        go i j osⱼ (γ ∷ γs) with length Γ - 1
+        ... | n with weaken (2 + j) L
+        ... | L' with weaken ((n - i) + 3 + j) γ
+        ... | γ' with (let w' = var₀ (suc j)
+                       in let γ'[w'/L'] = γ' r[ w' / L' ]
+                       in reorderVars osⱼ <$> γ'[w'/L'])
+        ... | γ'[w'/L'][reordered] with (let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+                                         in let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
+                                         in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
+        ... | true = (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs
+        ... | false = go (suc i) j (weakenOrder osⱼ) γs
+
+      𝐺[w/L] : Type
+      𝐺[w/L] with 2 + ∣Γᴸ∣ | 3 + ∣Γᴸ∣
+      ... | l | r =
+        let os = go 0 indexes[Γ] []
+            𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ l / weaken r L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                 --𝐺 r[ var₀ 0 / L ]
+        in
+          {-reorderVars os-} 𝐺'
+        where
+
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+-}
+
+
 
       {-
          <---------------------- helper-type------------------ ... -->
@@ -306,31 +311,51 @@ module Tactic.Reflection.Reright where
       -}
       𝐺[R/L] : Type
       𝐺[R/L] =
-        let os = from 0 for (2 * ∣Γᴸ∣ + 2 + length Γ)
-            os′ = go 0 indexes[Γ] os
+        let os = go 0 indexes[Γ] []
             𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
         in
-          reorderVars os′ 𝐺'
+          reorderVars os 𝐺'
         where
 
-        go : Nat → List Nat → List Nat → List Nat
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
         go _ [] ns = ns
-        go j (i ∷ is) ns = go (suc j) is $ setElem (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i) ((∣Γᴸ∣ - 1) - j) ns
-
+        go j (i ∷ is) ns = go (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
+{-
       𝐺[w/L] : Type
       𝐺[w/L] =
-        let os = from 0 for (1 + ∣Γᴸ∣ + 2 + length Γ)
-            os′ = go 0 indexes[Γ] os
-            𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+        let os = go 0 indexes[Γ] []
+            𝐺' = --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                 (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                 --𝐺 r[ var₀ 0 / L ]
         in
-          reorderVars os′ 𝐺'
+          {-reorderVars os-} 𝐺'
         where
 
-        go : Nat → List Nat → List Nat → List Nat
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
         go _ [] ns = ns
-        go j (i ∷ is) ns = go (suc j) is $ setElem (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i) (1 + (∣Γᴸ∣ - 1) - j) ns
+        go j (i ∷ is) ns = go (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+-}
+{-
+      𝐺[w/L] : Type
+      𝐺[w/L] with 2 + ∣Γᴸ∣ | 3 + ∣Γᴸ∣
+      ... | l | r =
+        let os = go 0 indexes[Γ] []
+            𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ l / weaken r L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / (weaken $! (3 + ∣Γᴸ∣)) L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken 4 L ]
+                 --(weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ 3 / weaken 4 L ]
+                 --𝐺 r[ var₀ 0 / L ]
+        in
+          {-reorderVars os-} 𝐺'
+        where
 
-
+        go : Nat → List Nat → List (Nat × Nat) → List (Nat × Nat)
+        go _ [] ns = ns
+        go j (i ∷ is) ns = go (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+-}
       w : Arg Type
       w = hArg A
 
@@ -350,7 +375,6 @@ module Tactic.Reflection.Reright where
       helper-call-args = hArg unknown ∷ vArg l≡r ∷ helper-call-args' where
         helper-call-args' : List (Arg Term)
         helper-call-args' = (λ { (γ[w/L] , index[γ]) → var₀ (length Γ - index[γ] - 1) <$ γ[w/L] }) <$> Γ[w/L]×indexes[Γ]
--}
 
     getRequest : Term → Term → TC Request
     getRequest l≡r hole = do
@@ -373,26 +397,24 @@ module Tactic.Reflection.Reright where
                   strErr "\nL:"              ∷ termErr (` L)                    ∷
                   strErr "\nR:"              ∷ termErr (` R)                    ∷
                   strErr "\nΓ:"              ∷ termErr (` Γ)                    ∷
+                  strErr "\nlength Γ:"       ∷ termErr (` (length Γ))           ∷
                   strErr "\n𝐺:"              ∷ termErr (` 𝐺)                    ∷
-                  strErr "\nΓ[w/L]':"        ∷ termErr (` Γ[w/L]')              ∷
-{-
                   strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
                   strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
                   strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
--}
-{-
-                  strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
-                  strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
+                  --strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
+                  --strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
                   strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
                   strErr "\nw:"              ∷ termErr (` w)                    ∷
                   strErr "\nw≡R:"            ∷ termErr (` w≡R)                  ∷
+                  {-
                   strErr "helper-type:"      ∷ termErr helper-type              ∷
                   strErr "helper-patterns:"  ∷ termErr (` helper-patterns)      ∷
                   strErr "helper-term:"      ∷ termErr (` helper-term)          ∷
                   strErr "helper-call-args:" ∷ termErr (` helper-call-args)     ∷
--}
+                  -}
                   [] )
-{-
+
     reright : Term → Tactic
     reright l≡r hole =
       q ← getRequest l≡r hole -|
@@ -400,4 +422,3 @@ module Tactic.Reflection.Reright where
       let open Request q in
       catchTC (typeError [ strErr "error defining helper function" ]) (define (vArg n) helper-type [ clause helper-patterns helper-term ]) ~|
       unify hole (def n helper-call-args)
--}
