@@ -17,6 +17,7 @@ module Tactic.Reflection.Replace where
       {-# TERMINATING #-}
       -- p r₀[ r / l ] = replace l with r in p
       _r₀[_/_] : Term → Term → Term → Term
+      {-
       p r₀[ r / l ] with p == l
       p r₀[ r / l ] | yes _ = r
       (var x args) r₀[ r / l ] | no _ = var x (args r₂[ r / l ])
@@ -29,6 +30,25 @@ module Tactic.Reflection.Replace where
       lit l r₀[ r / l₁ ] | no _ = lit l
       meta x args r₀[ r / l ] | no _ = meta x $ args r₂[ r / l ]
       unknown r₀[ r / l ] | no _ = unknown
+      -}
+      p r₀[ r / l ] with isYes (p == l)
+      ... | true = r
+      ... | false = case p of λ
+            { (var x args) → case args r₂[ r / l ] of λ args' → var x args'
+            ; (con c args) → con c $ args r₂[ r / l ]
+            ; (def f args) → def f $ args r₂[ r / l ]
+            ; (lam v t) → lam v $ t r₁[ weaken 1 r / weaken 1 l ] -- lam v <$> t r₁[ weaken 1 r / weaken 1 l ]
+            ; (pat-lam cs args) → let w = length args in pat-lam (replaceClause (weaken w l) (weaken w r) <$> cs) $ args r₂[ r / l ]
+            ; (pi a b) → case a r₁[ r / l ] of λ a' →
+                         case weaken 1 r of λ wr →
+                         case weaken 1 l of λ wl →
+                         case b r₁[ wr / wl ] of λ b' →
+                         pi a' b'
+            ; (agda-sort s) → agda-sort $ replaceSort l r s
+            ; (lit l) → lit l
+            ; (meta x args) → meta x $ args r₂[ r / l ]
+            ; unknown → unknown
+            }
       {-
       p r₀[ r / l ] =
         ifYes p == l

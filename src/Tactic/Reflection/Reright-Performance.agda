@@ -1,13 +1,85 @@
 --{-# OPTIONS -v profile:10 #-}
 -- compare agda issue 426
 module Tactic.Reflection.Reright-Performance where
-  open import Agda.Primitive
-  open import Agda.Builtin.Bool
-  open import Agda.Builtin.Nat
-  open import Agda.Builtin.List
-  open import Agda.Builtin.Equality
+  module no-need-for-sharing where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
+    -- lambda lifted
+    compare-before-cons : List Nat → List Nat
+    compare-before-cons [] = []
+    compare-before-cons (n ∷ ns) = ifthenelse (n < 50) where
+      ifthenelse : Bool → List Nat
+      ifthenelse true = suc n ∷ compare-before-cons ns
+      ifthenelse false = n ∷ compare-before-cons ns
+
+    -- lambda dropped
+    cons-before-compare : List Nat → List Nat
+    cons-before-compare [] = []
+    cons-before-compare (n ∷ ns) = (if n < 50 then suc n else n) ∷ cons-before-compare ns where
+      if_then_else_ : Bool → Nat → Nat → Nat
+      if true  then t else e = t
+      if false then t else e = e
+
+    foo : Nat → List Nat → (List Nat → List Nat) → Nat
+    foo 0 [] _ = 0
+    foo 0 (x ∷ xs) _ = x
+    foo (suc n) xs f = foo n (f xs) f
+
+    run-foo : (List Nat → List Nat) → Nat
+    run-foo = foo 100 (0 ∷ [])
+
+    compare-before-cons-is-fast : run-foo compare-before-cons ≡ 50
+    compare-before-cons-is-fast = {!!} -- C-u C-u C-c C-,
+
+    cons-before-compare-is-slow : run-foo cons-before-compare ≡ 50
+    cons-before-compare-is-slow = {!refl!} -- C-u C-u C-c C-,
+
+  module needs-sharing-and-lambda-lift where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
+    mod : Nat -> Nat -> Nat
+    mod 0       k = 0
+    mod (suc n) k = ifthenelse (suc (mod n k) < k)
+      where
+      ifthenelse : Bool → Nat
+      ifthenelse true  = suc (mod n k)
+      ifthenelse false = 0
+
+    test-mod : mod 100 10 ≡ 0
+    test-mod = {!refl!}
+
+  module needs-sharing where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
+    mod : Nat -> Nat -> Nat
+    mod 0       k = 0
+    mod (suc n) k with suc (mod n k)
+    ... | r with r < k
+    ... | true = r
+    ... | false = 0
+
+    test-mod : mod 100 10 ≡ 0
+    test-mod = {!refl!}
 
   module before-and-after-more-mystery where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     infixr 1 _,_
     data Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
       _,_ : (x : A) (y : B x) → Σ A B
@@ -61,6 +133,12 @@ module Tactic.Reflection.Reright-Performance where
     cons-before-compare-is-slow = {!refl!} -- C-u C-u C-c C-,
 
   module before-and-after-vec-head where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     -- try putting the head element in the type, defaulting to 0
 
     infixr 0 case_of_
@@ -122,6 +200,11 @@ module Tactic.Reflection.Reright-Performance where
     cons-before-compare-is-slow = {!refl!} -- C-u C-u C-c C-,
 
   module before-and-after-vec where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
 
     infixr 5 _∷_
     data Vec {a} (A : Set a) : Nat → Set a where
@@ -168,6 +251,12 @@ module Tactic.Reflection.Reright-Performance where
     cons-before-compare-is-slow = {!refl!} -- C-u C-u C-c C-,
 
   module before-and-after where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     compare-before-cons : List Nat → List Nat
     compare-before-cons [] = []
     compare-before-cons (n ∷ ns) = ifthenelse (n < 50) where
@@ -226,6 +315,12 @@ module Tactic.Reflection.Reright-Performance where
     try-by-hand = {!!}
 
   module slow-mod where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     mod : Nat -> Nat -> Nat
     mod 0       k = 0
     mod (suc n) k = ifthenelse (suc (mod n k) < k)
@@ -235,9 +330,15 @@ module Tactic.Reflection.Reright-Performance where
       ifthenelse false = 0
 
     test-mod : mod 100 10 ≡ 0
-    test-mod = {!!}
+    test-mod = {!refl!}
 
-  module fast-mod where
+  module fast-mod where -- needs --sharing to be fast
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     mod : Nat -> Nat -> Nat
     mod 0       k = 0
     mod (suc n) k with suc (mod n k)
@@ -248,7 +349,32 @@ module Tactic.Reflection.Reright-Performance where
     test-mod : mod 100 10 ≡ 0
     test-mod = {!refl!}
 
+  module faster-mod where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
+    mod : Nat -> Nat -> Nat
+    mod 0       k = 0
+    mod (suc n) 0 with mod n 0 < 0
+    ... | true = suc (mod n 0)
+    ... | false = 0
+    mod (suc n) (suc k) with mod n (suc k) < k
+    ... | true = suc (mod n (suc k))
+    ... | false = 0
+
+    test-mod : mod 100 10 ≡ 0
+    test-mod = {!refl!}
+
   module ulf-mod where
+    open import Agda.Primitive
+    open import Agda.Builtin.Bool
+    open import Agda.Builtin.Nat
+    open import Agda.Builtin.List
+    open import Agda.Builtin.Equality
+
     case_of_ : {A B : Set} → A → (A → B) → B
     case_of_ x f = f x
 
