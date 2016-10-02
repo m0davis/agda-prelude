@@ -104,6 +104,12 @@ private
 
   wk : Wk Term
   wk lo k (var x args)  = var (wkVar lo k x) (wkArgs lo k args)
+{-
+  wk lo k (var x args)  = var (wkVar lo k x) (wkArgs lo k args)
+   with x <? lo
+  ... | true            = var x (wkArgs lo k args)
+  ... | false           = var (x + k) (wkArgs lo k args)
+-}
   wk lo k (con c args)  = con c (wkArgs lo k args)
   wk lo k (def f args)  = def f (wkArgs lo k args)
   wk lo k (meta x args) = meta x (wkArgs lo k args)

@@ -151,6 +151,9 @@ v₀* : Nat → Tree → Tree
 v₀* 0 t = t
 v₀* (suc n) t = w₁ n (v₀* n t)
 
+w* : Nat → Tree
+w* n = wider n (replicate n (w₀ n))
+
 module Test₂ where
   source : Tree
   source = v₀ 5 →→ v₀ 3
@@ -163,10 +166,10 @@ module Test₂ where
 
 module Test₃ where
   source : Tree
-  source = v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41
+  source = v₀ 41 →→ w* 100 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ w* 100
 
   target : Tree
-  target = v₀* 41 (v₀ 1) →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41
+  target = v₀* 41 (v₀ 1) →→ w* 100 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ v₀ 41 →→ w* 100
 
   test : source r[ v₀ 1 / v₀ 0 ] ≡ target
   test = {!refl!}

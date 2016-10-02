@@ -233,8 +233,8 @@ module Tactic.Reflection.Reright where
               go (suc i) j (weakenOrder osⱼ) γs
       -}
 
--- TODO: Using this first "something" makes it slow to evaluate ` 𝐺[w/L] ...
-      {-
+-- TODO: Using this first "something" makes it fast to evaluate ` 𝐺[w/L] ...
+
       something  : Nat × List (Arg Type × Nat)
       something = go 0 0 [] Γ where
         go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → Nat × List (Arg Type × Nat)
@@ -250,8 +250,9 @@ module Tactic.Reflection.Reright where
                                          in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
         ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (suc (length (snd foo)) , (γ'[w'/L'][reordered] , i) ∷ snd foo)
         ... | false = go (suc i) j (weakenOrder osⱼ) γs
-      -}
--- ... but this second "something" makes it fast. Why?
+
+-- ... but this second "something" makes it slow. Why?
+{-
       something  : Nat × List (Arg Type × Nat)
       something = let asdf = go 0 0 [] Γ in (length asdf , asdf) where
         go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
@@ -267,16 +268,38 @@ module Tactic.Reflection.Reright where
                                          in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
         ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (γ'[w'/L'][reordered] , i) ∷ foo
         ... | false = go (suc i) j (weakenOrder osⱼ) γs
-
-      everything : List (Arg Type × Nat) × Type
+-}
+      everything : List (Arg Type × Nat) × Type × List (Arg Type)
       everything
        with something
       ... | (_ , Γw)
        with fst <$> Γw
       ... | biggies
        with length biggies
-      ... | |l| = Γw , 𝐺[w/L]
+      ... | |l| = Γw , 𝐺[w/L] , Γ[R/L]
         where
+
+        Γ[R/L] : List (Arg Type)
+        Γ[R/L] = go |l| 0 biggies where
+  {-
+        Γ[R/L] {-with length (snd Γ[w/L]×indexes[Γ]')
+        ... | ∣Γᴸ∣-} = go 0 Γ[w/L] where
+  -}
+          go : Nat → Nat → List (Arg Type) → List (Arg Type)
+          go _ _ [] = []
+          go |l| i (γ ∷ γs) =
+            -- γ is the index[γ]ᵗʰ element of Γ[w/L]
+            let ∣Γᴸ∣ = |l|
+                --∣Γᴸ∣ = length (snd things)
+                --∣Γᴸ∣ = case things of λ { (_ , asdf) → length asdf }
+                n = ∣Γᴸ∣ - 1
+                γ' = weakenFrom i ∣Γᴸ∣ γ
+                w' = var₀ (i + n + 2)
+                R' = weaken (2 + ∣Γᴸ∣ + i) R
+                γ'[R'/w'] = γ' r[ R' / w' ]
+            in
+              γ'[R'/w'] ∷ go |l| (suc i) γs
+
         𝐺[w/L] : Type
         𝐺[w/L] with 2 + |l| | 3 + |l|
         ... | l | r =
@@ -314,7 +337,11 @@ module Tactic.Reflection.Reright where
       --∣Γᴸ∣ = length Γ[w/L]
 
       𝐺[w/L] : Type
-      𝐺[w/L] = snd everything
+      𝐺[w/L] = fst (snd everything)
+
+      --postulate Γ[R/L] : List (Arg Type)
+      Γ[R/L] : List (Arg Type)
+      Γ[R/L] = snd (snd everything)
 
 {-
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
@@ -360,11 +387,9 @@ module Tactic.Reflection.Reright where
          w w≡R γ₀ γ₁ ... γᵢ ... γₙ ( γ'₀ γ'₁ ... γ'ᵢ ... γ'ₙ )
          n = ∣Γᴸ∣ - 1 = length Γ[w/L] - 1
       -}
+{-
       Γ[R/L] : List (Arg Type)
-      Γ[R/L] with Γ[w/L]×indexes[Γ]'
-      ... | things with things
-      ... | (_ , stuff) with length stuff
-      ... | ∣Γᴸ∣ = go 0 Γ[w/L] where
+      Γ[R/L] = go 0 Γ[w/L] where
 {-
       Γ[R/L] {-with length (snd Γ[w/L]×indexes[Γ]')
       ... | ∣Γᴸ∣-} = go 0 Γ[w/L] where
@@ -373,7 +398,7 @@ module Tactic.Reflection.Reright where
         go _ [] = []
         go i (γ ∷ γs) =
           -- γ is the index[γ]ᵗʰ element of Γ[w/L]
-          let ∣Γᴸ∣ = length stuff
+          let --∣Γᴸ∣ = length stuff
               --∣Γᴸ∣ = length (snd things)
               --∣Γᴸ∣ = case things of λ { (_ , asdf) → length asdf }
               n = ∣Γᴸ∣ - 1
@@ -383,15 +408,15 @@ module Tactic.Reflection.Reright where
               γ'[R'/w'] = γ' r[ R' / w' ]
           in
             γ'[R'/w'] ∷ go (suc i) γs
-
+-}
       {-
          Γ             Γ[w/L]   Γ[R/L]
          0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
       -}
       𝐺[R/L] : Type
-      𝐺[R/L] with Γ[w/L]×indexes[Γ]'
+      𝐺[R/L] with everything
       ... | things with things
-      ... | (_ , stuff) with length stuff
+      ... | (stuff , _) with length stuff
       ... | ∣Γᴸ∣ =
         let os = go 0 indexes[Γ] []
             𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
@@ -735,6 +760,7 @@ module Tactic.Reflection.Reright where
                   --strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
                   --strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
                   strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
+                  strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
 
 
                   {-
@@ -744,13 +770,13 @@ module Tactic.Reflection.Reright where
                   strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
                   strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
                   strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
+                  -}
                   strErr "\nw:"              ∷ termErr (` w)                    ∷
                   strErr "\nw≡R:"            ∷ termErr (` w≡R)                  ∷
                   strErr "helper-type:"      ∷ termErr helper-type              ∷
                   strErr "helper-patterns:"  ∷ termErr (` helper-patterns)      ∷
                   strErr "helper-term:"      ∷ termErr (` helper-term)          ∷
                   strErr "helper-call-args:" ∷ termErr (` helper-call-args)     ∷
-                  -}
                   [] )
 
     reright : Term → Tactic

@@ -11,7 +11,7 @@ module Tactic.Reflection.Reright-Performance where
 
   [_$_]×_ : ∀ {a} {A : Set a} → (List A → List A) → List A → Nat → List A
   [ _ $ xs ]× 0 = xs
-  [ f $ xs ]× (suc n) = [ f $ f xs ]× n
+  [ f $ xs ]× suc n = [ f $ f xs ]× n
 
   unlifted-weaken : List Nat → List Nat
   unlifted-weaken [] = []
@@ -24,7 +24,7 @@ module Tactic.Reflection.Reright-Performance where
   length [] = 0
   length (_ ∷ xs) = suc (length xs)
 
-  test-length-unlifted-weaken : length ([ unlifted-weaken $ [ 0 ∷_ $ [] ]× 1000 ]× 1000) ≡ 1
+  test-length-unlifted-weaken : length ([ unlifted-weaken $ [ 0 ∷_ $ [] ]× 1000 ]× 1000) ≡ 1000
   test-length-unlifted-weaken = refl
 
   lifted-weaken : List Nat → List Nat
