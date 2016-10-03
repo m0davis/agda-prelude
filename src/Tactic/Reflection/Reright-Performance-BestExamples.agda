@@ -204,7 +204,7 @@ module continuation-passing where
                     go ts
 
   try : Bool × List Term → Term
-  try (_ , ts) = let l = length ts in deep-term r[ var l [] / var l [] ]
+  try (_ , ts) = let l = length ts in deep-term r[ var l [] / var l [] ] -- pattern match strips the delays -- they will run if forced to! -- fortunately, length doesn't force them in "fast", b/c "fast" computed the list without delay (only the elements of the list have been delayed) -- otoh, "slow" delayed the entire computation; now when length is applied to the stripped computation, it must compute "go" before finding a list-like pattern match.
 
   try-harder'' : Nat → Term
   try-harder'' l = deep-term r[ var l [] / var l [] ]
