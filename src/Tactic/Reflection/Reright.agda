@@ -102,8 +102,11 @@ module Tactic.Reflection.Reright where
       indexes[Γ] : List Nat
       indexes[Γ] = snd <$> Γ[w/L]×indexes[Γ]
 
-      ∣Γᴸ∣ : Nat
-      ∣Γᴸ∣ = length Γ[w/L]×indexes[Γ]
+      length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
+      length& {A = A} xs {B = B} f = helper 0 xs where
+        helper : Nat → List A → B
+        helper l [] = f l
+        helper l (x ∷ xs) = helper (suc l) xs
 
       {-
          <---------------------- helper-type------------------ ... -->
@@ -112,10 +115,10 @@ module Tactic.Reflection.Reright where
          n = ∣Γᴸ∣ - 1 = length Γ[w/L] - 1
       -}
       Γ[R/L] : List (Arg Type)
-      Γ[R/L] = go 0 Γ[w/L] where
-        go : Nat → List (Arg Type) → List (Arg Type)
-        go _ [] = []
-        go i (γ ∷ γs) =
+      Γ[R/L] = length& Γ[w/L] (go 0 Γ[w/L]) where
+        go : Nat → List (Arg Type) → Nat → List (Arg Type)
+        go _ [] _ = []
+        go i (γ ∷ γs) ∣Γᴸ∣ =
           -- γ is the index[γ]ᵗʰ element of Γ[w/L]
           let n = ∣Γᴸ∣ - 1
               γ' = weakenFrom i ∣Γᴸ∣ γ
@@ -123,35 +126,37 @@ module Tactic.Reflection.Reright where
               R' = weaken (2 + ∣Γᴸ∣ + i) R
               γ'[R'/w'] = γ' r[ R' / w' ]
           in
-            γ'[R'/w'] ∷ go (suc i) γs
+            γ'[R'/w'] ∷ go (suc i) γs ∣Γᴸ∣
 
       {-
          Γ             Γ[w/L]   Γ[R/L]
          0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
       -}
       𝐺[R/L] : Type
-      𝐺[R/L] =
-        let os = go 0 indexes[Γ] []
+      𝐺[R/L] = length& Γ[w/L]×indexes[Γ] λ ∣Γᴸ∣ →
+        let os = go ∣Γᴸ∣ 0 indexes[Γ] []
             𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
         in
           reorderVars os 𝐺'
         where
 
-        go : Nat → List Nat → Reordering → Reordering
-        go _ [] ns = ns
-        go j (i ∷ is) ns = go (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
+        go : Nat → Nat → List Nat → Reordering → Reordering
+        go _ _ [] ns = ns
+        go ∣Γᴸ∣ j (i ∷ is) ns = go ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
 
       𝐺[w/L] : Type
-      𝐺[w/L] =
-        let os = go 0 indexes[Γ] []
-            𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
-        in
-          reorderVars os 𝐺'
-        where
+      𝐺[w/L] = length& Γ[w/L]×indexes[Γ] go where
+        go : Nat → Type
+        go ∣Γᴸ∣ =
+          let os = os' 0 indexes[Γ] []
+              𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
+          in
+            reorderVars os 𝐺'
+          where
 
-        go : Nat → List Nat → Reordering → Reordering
-        go _ [] ns = ns
-        go j (i ∷ is) ns = go (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+          os' : Nat → List Nat → Reordering → Reordering
+          os' _ [] ns = ns
+          os' j (i ∷ is) ns = os' (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
 
       w : Arg Type
       w = hArg A
@@ -188,26 +193,26 @@ module Tactic.Reflection.Reright where
     reright-debug l≡r hole =
       q ← getRequest l≡r hole -|
       let open Request q in
-      typeError ( strErr "reright-debug"     ∷
-                  strErr "\nl≡r:"            ∷ termErr (` (Request.l≡r q))      ∷
-                  strErr "\nA:"              ∷ termErr (` A)                    ∷
-                  strErr "\nL:"              ∷ termErr (` L)                    ∷
-                  strErr "\nR:"              ∷ termErr (` R)                    ∷
-                  strErr "\nΓ:"              ∷ termErr (` Γ)                    ∷
-                  strErr "\nlength Γ:"       ∷ termErr (` (length Γ))           ∷
-                  strErr "\n𝐺:"              ∷ termErr (` 𝐺)                   ∷
-                  strErr "\nΓ[w/L]:"         ∷ termErr (` Γ[w/L])               ∷
-                  strErr "\nindexes[Γ]:"     ∷ termErr (` indexes[Γ])           ∷
-                  strErr "\n∣Γᴸ∣:"           ∷ termErr (` ∣Γᴸ∣)                 ∷
-                  strErr "\nΓ[R/L]:"         ∷ termErr (` Γ[R/L])               ∷
-                  strErr "\n𝐺[R/L]:"         ∷ termErr (` 𝐺[R/L])               ∷
-                  strErr "\n𝐺[w/L]:"         ∷ termErr (` 𝐺[w/L])               ∷
-                  strErr "\nw:"              ∷ termErr (` w)                    ∷
-                  strErr "\nw≡R:"            ∷ termErr (` w≡R)                  ∷
-                  strErr "helper-type:"      ∷ termErr helper-type              ∷
-                  strErr "helper-patterns:"  ∷ termErr (` helper-patterns)      ∷
-                  strErr "helper-term:"      ∷ termErr (` helper-term)          ∷
-                  strErr "helper-call-args:" ∷ termErr (` helper-call-args)     ∷
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\nl≡r:"                 ∷ termErr (` (Request.l≡r q))      ∷
+                  strErr "\nA:"                   ∷ termErr (` A)                    ∷
+                  strErr "\nL:"                   ∷ termErr (` L)                    ∷
+                  strErr "\nR:"                   ∷ termErr (` R)                    ∷
+                  strErr "\nΓ:"                   ∷ termErr (` Γ)                    ∷
+                  strErr "\nlength Γ:"            ∷ termErr (` (length Γ))           ∷
+                  strErr "\n𝐺:"                   ∷ termErr (` 𝐺)                   ∷
+                  strErr "\nΓ[w/L]×indexes[Γ]:"   ∷ termErr (` Γ[w/L]×indexes[Γ])    ∷
+                  strErr "\nΓ[w/L]:"              ∷ termErr (` Γ[w/L])               ∷
+                  strErr "\nindexes[Γ]:"          ∷ termErr (` indexes[Γ])           ∷
+                  strErr "\nΓ[R/L]:"              ∷ termErr (` Γ[R/L])               ∷
+                  strErr "\n𝐺[R/L]:"              ∷ termErr (` 𝐺[R/L])               ∷
+                  strErr "\n𝐺[w/L]:"              ∷ termErr (` 𝐺[w/L])               ∷
+                  strErr "\nw:"                   ∷ termErr (` w)                    ∷
+                  strErr "\nw≡R:"                 ∷ termErr (` w≡R)                  ∷
+                  strErr "helper-type:"           ∷ termErr helper-type              ∷
+                  strErr "helper-patterns:"       ∷ termErr (` helper-patterns)      ∷
+                  strErr "helper-term:"           ∷ termErr (` helper-term)          ∷
+                  strErr "helper-call-args:"      ∷ termErr (` helper-call-args)     ∷
                   [] )
 
     reright : Term → Tactic
