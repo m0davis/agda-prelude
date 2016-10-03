@@ -20,8 +20,8 @@ module Tactic.Reflection.Reright where
     ... | no _ = replaceVar d xns x
 
     reorderVars' : Nat → Nat → Reordering → Term → Term
+    reorderVars' _ _ [] x = x
     reorderVars' 0 _ _ x = x
-    reorderVars' (suc n) d [] (var x args) = var x (fmap (reorderVars' n d []) <$> args)
     reorderVars' (suc n) d ((x-d , n-d) ∷ xns) (var x args) with x == x-d + d
     ... | yes _ = var (n-d + d) (fmap (reorderVars' n d xns) <$> args)
     ... | no _ = reorderVars' (suc n) d xns (var x args)
