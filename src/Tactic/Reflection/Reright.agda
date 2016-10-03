@@ -235,8 +235,8 @@ module Tactic.Reflection.Reright where
 
 -- TODO: Using this first "something" makes it fast to evaluate ` 𝐺[w/L] ...
 
-      something  : Nat × List (Arg Type × Nat)
-      something = go 0 0 [] Γ where
+      something-fast  : Nat × List (Arg Type × Nat)
+      something-fast = go 0 0 [] Γ where
         go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → Nat × List (Arg Type × Nat)
         go _ _ _ [] = 0 , []
         go i j osⱼ (γ ∷ γs) with length Γ - 1
@@ -252,9 +252,8 @@ module Tactic.Reflection.Reright where
         ... | false = go (suc i) j (weakenOrder osⱼ) γs
 
 -- ... but this second "something" makes it slow. Why?
-{-
-      something  : Nat × List (Arg Type × Nat)
-      something = let asdf = go 0 0 [] Γ in (length asdf , asdf) where
+      something-slow  : Nat × List (Arg Type × Nat)
+      something-slow = let asdf = go 0 0 [] Γ in (length asdf , asdf) where
         go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
         go _ _ _ [] = []
         go i j osⱼ (γ ∷ γs) with length Γ - 1
@@ -268,10 +267,10 @@ module Tactic.Reflection.Reright where
                                          in γ≢l≡r && γ'≠γ'[w'/L'][reordered])
         ... | true = let foo = go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenOrder osⱼ) γs in (γ'[w'/L'][reordered] , i) ∷ foo
         ... | false = go (suc i) j (weakenOrder osⱼ) γs
--}
+
       everything : List (Arg Type × Nat) × Type × List (Arg Type)
       everything
-       with something
+       with something-slow
       ... | (_ , Γw)
        with fst <$> Γw
       ... | biggies
