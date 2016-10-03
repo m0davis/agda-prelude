@@ -13,13 +13,13 @@ module Tactic.Reflection.Reright where
     weakenReordering [] = []
     weakenReordering ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenReordering xs
 
-    replaceVar : Nat → List (Nat × Nat) → Nat → Nat
+    replaceVar : Nat → Reordering → Nat → Nat
     replaceVar d [] x = x
     replaceVar d ((x-d , n-d) ∷ xns) x with x == x-d + d
     ... | yes _ = n-d + d
     ... | no _ = replaceVar d xns x
 
-    reorderVars' : Nat → Nat → List (Nat × Nat) → Term → Term
+    reorderVars' : Nat → Nat → Reordering → Term → Term
     reorderVars' 0 _ _ x = x
     reorderVars' (suc n) d [] (var x args) = var x (fmap (reorderVars' n d []) <$> args)
     reorderVars' (suc n) d ((x-d , n-d) ∷ xns) (var x args) with x == x-d + d
@@ -29,7 +29,7 @@ module Tactic.Reflection.Reright where
     reorderVars' (suc n) d xns (def f args) = def f (fmap (reorderVars' n d xns) <$> args)
     reorderVars' (suc n) d xns (lam v t) = lam v (reorderVars' n (suc d) xns <$> t)
     reorderVars' (suc n) d xns (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n d xns) cs) ((fmap ∘ fmap) (reorderVars' n d xns) args) where
-      reorderVars'InClause : Nat → Nat → List (Nat × Nat) → Clause → Clause -- TODO reorder patterns?
+      reorderVars'InClause : Nat → Nat → Reordering → Clause → Clause -- TODO reorder patterns?
       reorderVars'InClause n d xns (clause ps t) = (clause ps (reorderVars' n d xns t))
       reorderVars'InClause n d xns (absurd-clause ps) = (absurd-clause ps)
     reorderVars' (suc n) d xns (pi a b) = pi (reorderVars' n d xns <$> a) (reorderVars' n (suc d) xns <$> b)
@@ -41,14 +41,14 @@ module Tactic.Reflection.Reright where
     reorderVars' (suc n) d xns unknown = unknown
 
 {-
-    reorderVars' : Nat → Nat → List (Nat × Nat) → Term → Term
+    reorderVars' : Nat → Nat → Reordering → Term → Term
     reorderVars' 0 _ _ x = x
     reorderVars' (suc n) d xns (var x args) = var (replaceVar d xns x) (fmap (reorderVars' n d xns) <$> args)
     reorderVars' (suc n) d xns (con c args) = con c ((fmap ∘ fmap) (reorderVars' n d xns) args)
     reorderVars' (suc n) d xns (def f args) = def f (fmap (reorderVars' n d xns) <$> args)
     reorderVars' (suc n) d xns (lam v t) = lam v (reorderVars' n (suc d) xns <$> t)
     reorderVars' (suc n) d xns (pat-lam cs args) = pat-lam (fmap (reorderVars'InClause n d xns) cs) ((fmap ∘ fmap) (reorderVars' n d xns) args) where
-      reorderVars'InClause : Nat → Nat → List (Nat × Nat) → Clause → Clause -- TODO reorder patterns?
+      reorderVars'InClause : Nat → Nat → Reordering → Clause → Clause -- TODO reorder patterns?
       reorderVars'InClause n d xns (clause ps t) = (clause ps (reorderVars' n d xns t))
       reorderVars'InClause n d xns (absurd-clause ps) = (absurd-clause ps)
     reorderVars' (suc n) d xns (pi a b) = pi (reorderVars' n d xns <$> a) (reorderVars' n (suc d) xns <$> b)
@@ -59,7 +59,7 @@ module Tactic.Reflection.Reright where
     reorderVars' (suc n) d xns (meta x args) = meta x $ (fmap ∘ fmap) (reorderVars' n d xns) args
     reorderVars' (suc n) d xns unknown = unknown
 -}
-    reorderVars : List (Nat × Nat) → Term → Term
+    reorderVars : Reordering → Term → Term
     reorderVars xs t = reorderVars' 99 0 xs t
 
     record Request : Set where
@@ -79,7 +79,7 @@ module Tactic.Reflection.Reright where
       -}
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
       Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
-        go : Nat → Nat → List (Nat × Nat) → List (Arg Type) → List (Arg Type × Nat)
+        go : Nat → Nat → Reordering → List (Arg Type) → List (Arg Type × Nat)
         go _ _ _ [] = []
         go i j osⱼ (γ ∷ γs) =
           let n = length Γ - 1
