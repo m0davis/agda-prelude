@@ -68,7 +68,7 @@ all? p []       = true
 all? p (x ∷ xs) = p x && all? p xs
 
 any? : ∀ {a} {A : Set a} → (A → Bool) → List A → Bool
-any? p []       = true
+any? p []       = false
 any? p (x ∷ xs) = p x || any? p xs
 
 take : ∀ {a} {A : Set a} → Nat → List A → List A
@@ -225,6 +225,9 @@ instance
 instance
   FunctorList : ∀ {a} → Functor (List {a})
   fmap {{FunctorList}} = map
+
+  FunctorList′ : ∀ {a b} → Functor′ {a} {b} List
+  fmap′ {{FunctorList′}} = map
 
   MonadList : ∀ {a} → Monad (List {a})
   return {{MonadList}} x    = x ∷ []
