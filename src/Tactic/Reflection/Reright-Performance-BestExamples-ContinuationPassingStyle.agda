@@ -123,11 +123,11 @@ with-helP (_ , ts)
 ... | l = try-harder'' l
 
 test-area : Term × Term × Term × Term × Term
-test-area = {!try fast!} ,
-            {!try slow!} ,
-            {!try-harder slow!} ,
-            {!try-cps slow!} ,
-            {!with-helP slow!}
+test-area = {!try fast!} , -- fast
+            {!try slow!} , -- slow
+            {!try-harder slow!} , -- fast
+            {!try-cps slow!} , -- fast
+            {!with-helP slow!} -- slow
 
 {- normalise: try fast
      try fast
