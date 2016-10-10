@@ -168,8 +168,17 @@ module Tactic.Reflection.Replace where
       _r₁'[_/_] : {T₀ : Set → Set} {{_ : Functor T₀}} {{_ : Traversable T₀}} → T₀ Term → Term → Term → Maybe (T₀ Term)
       p r₁'[ r / l ] = traverse _r₀'[ r / l ] p
 
-      _r₂'[_/_] : {T₀ T₁ : Set → Set} {{_ : Functor T₀}} {{_ : Traversable T₀}} {{_ : Functor T₁}} {{_ : Traversable T₁}} → T₁ (T₀ Term) → Term → Term → Maybe (T₁ (T₀ Term))
-      p r₂'[ r / l ] = (traverse ∘ traverse) _r₀'[ r / l ] p
+      _r₂'[_/_] : List (Arg Term) → Term → Term → Maybe (List (Arg Term))
+      [] r₂'[ r / l ] = nothing
+      (p ∷ ps) r₂'[ r / l ] =
+        let ps' = ps r₂'[ r / l ]
+            p'  = p  r₁'[ r / l ]
+        in
+        case (p' , ps') of λ
+        { (nothing , nothing) → nothing
+        ; (just p  , nothing) → just (p ∷ ps)
+        ; (nothing , just ps) → just (p ∷ ps)
+        ; (just p  , just ps) → just (p ∷ ps) }
 
   instance
     TermTR' : TermReplacer' Term

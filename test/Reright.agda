@@ -5,7 +5,7 @@ module Reright where
   open import Agda.Builtin.Reflection
   open import Tactic.Reflection
   open import Tactic.Reflection.Quote
-{-
+
   module Benchmarks where
     foo : (A : Set) (x y : A) (F : A → A → Set) →
           -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
@@ -102,8 +102,8 @@ module Reright where
         _ _ _ _ _ _ _ _ _ _
         _ _ _ _ _ _ _ _ _ _
     -}
-        x≡y = reright-debug-1 x≡y {!!}
--}
+        x≡y = reright-debug-i x≡y {!!}
+
 
 
 
@@ -176,15 +176,21 @@ module Reright where
       helper : {!!}
       helper = {!!}
 
-    -reright' L R L≡R G l Gl F = helper L L≡R G l Gl F {!!} where
-      helper : (w : Set) (w≡R : w ≡ R) →
-               (G' : w → Set) (l' : w) (Gl' : G' l') (F' : (A : Set) (x y : A) → G' l' → Set) →
-               ((G'' : R → Set) (l'' : R) (Gl'' : G'' l'') (F'' : (A : Set) (x y : A) → G'' l'' → Set) →
+    -reright' L R L≡R G l Gl F = helper {_} L≡R G l Gl F {!!} where
+      helper : {w : Set} (w≡R : w ≡ R) →
+               (G' : w → Set)
+               (l' : w)
+               (Gl' : G' l')
+               (F' : (A : Set) (x y : A) → G' l' → Set) →
+               ((G'' : R → Set)
+                (l'' : R)
+                (Gl'' : G'' l'')
+                (F'' : (A : Set) (x y : A) → G'' l'' → Set) →
                 F'' R l'' l'' Gl'') →
                F' w l' l' Gl'
-      helper ._ refl G' l' Gl' F' φ = φ G' l' Gl' F'
+      helper {._} refl G' l' Gl' F' φ = φ G' l' Gl' F'
 
-    -reright L R L≡R G l Gl F = reright-debug L≡R {!!}
+    -reright L R L≡R G l Gl F = reright L≡R {!!}
 
 {-
 helper-type:

@@ -169,12 +169,11 @@ module Tactic.Reflection.Reright where
          γ' = γ'ⱼ
       -}
       Γ[w/L]×indexes[Γ]  : List (Arg Type × Nat)
-      Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
-        go : Nat → Nat → Reordering → List (Arg Type) → List (Arg Type × Nat)
-        go _ _ _ [] = []
-{-
-        go i j osⱼ (γ ∷ γs) =
-          id-Nat& (length Γ - 1) λ n →
+      Γ[w/L]×indexes[Γ] = length& Γ λ ∣Γ∣ → go ∣Γ∣ 0 0 [] Γ where
+        go : Nat → Nat → Nat → Reordering → List (Arg Type) → List (Arg Type × Nat)
+        go _ _ _ _ [] = []
+        go ∣Γ∣ i j osⱼ (γ ∷ γs) =
+          id-Nat& (∣Γ∣ - 1) λ n →
           let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
           in
           if γ≢l≡r then
@@ -184,29 +183,15 @@ module Tactic.Reflection.Reright where
                  γ'[w'/L']? = γ' r'[ w' / L' ]
             in
             maybe
-              (go (suc i) j osⱼ γs)
+              (go ∣Γ∣ (suc i) j osⱼ γs)
               (λ γ'[w'/L'] →
                 let γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
                 in
                 (γ'[w'/L'][reordered] , i) ∷
-                  go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs)
+                  go ∣Γ∣ (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs)
             γ'[w'/L']?)
           else
-            go (suc i) j osⱼ γs
--}
-        go i j osⱼ (γ ∷ γs) = id-Nat& (length Γ - 1) λ n →
-          let L' = weaken (2 + j) L
-              γ' = weaken ((n - i) + 3 + j) γ
-              w' = var₀ (suc j)
-              γ'[w'/L'] = γ' r[ w' / L' ]
-              γ'[w'/L'][reordered] = (reorderVars osⱼ) <$> γ'[w'/L']
-              γ≢l≡r = isNo $ var₀ (n - i) == l≡r
-              γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
-          in
-          if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
-            (γ'[w'/L'][reordered] , i) ∷ go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs
-          else
-            go (suc i) j osⱼ γs
+            go ∣Γ∣ (suc i) j osⱼ γs
 
       Γ[w/L] : List (Arg Type)
       Γ[w/L] = fst <$> Γ[w/L]×indexes[Γ]
@@ -238,6 +223,14 @@ module Tactic.Reflection.Reright where
          Γ             Γ[w/L]   Γ[R/L]
          0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
       -}
+      reorderings-𝐺[R/L] : List (Nat × Nat)
+      reorderings-𝐺[R/L] = length& Γ λ ∣Γ∣ → reverse& indexes[Γ] λ indexes[Γ] → length& indexes[Γ] λ ∣Γᴸ∣ →
+        os ∣Γ∣ ∣Γᴸ∣ 0 indexes[Γ] []
+        where
+        os : Nat → Nat → Nat → List Nat → Reordering → Reordering
+        os _ _ _ [] ns = ns
+        os ∣Γ∣ ∣Γᴸ∣ j (i ∷ is) ns = os ∣Γ∣ ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (∣Γ∣ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
+
       𝐺[R/L] : Type
       𝐺[R/L] = length& Γ λ ∣Γ∣ → reverse& indexes[Γ] λ indexes[Γ] → length& indexes[Γ] λ ∣Γᴸ∣ →
         let os' = os ∣Γ∣ ∣Γᴸ∣ 0 indexes[Γ] []
@@ -247,7 +240,7 @@ module Tactic.Reflection.Reright where
         where
         os : Nat → Nat → Nat → List Nat → Reordering → Reordering
         os _ _ _ [] ns = ns
-        os ∣Γ∣ ∣Γᴸ∣ j (i ∷ is) ns = os ∣Γ∣ ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (∣Γ∣ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
+        os ∣Γ∣ ∣Γᴸ∣ j (i ∷ is) ns = os ∣Γ∣ ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (∣Γ∣ - 1) - i , j) ∷ ns
 
       𝐺[w/L] : Type
       𝐺[w/L] = length& Γ[w/L]×indexes[Γ] go where
@@ -260,7 +253,7 @@ module Tactic.Reflection.Reright where
           where
           os : Nat → List Nat → Reordering → Reordering
           os _ [] ns = ns
-          os j (i ∷ is) ns = os (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+          os j (i ∷ is) ns = os (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1 - j)) ∷ ns
 
       w : Arg Type
       w = hArg A
@@ -310,6 +303,7 @@ module Tactic.Reflection.Reright where
                   strErr "\nindexes[Γ]:"          ∷ termErr (` indexes[Γ])           ∷
                   strErr "\nΓ[R/L]:"              ∷ termErr (` Γ[R/L])               ∷
                   strErr "\n𝐺[R/L]:"              ∷ termErr (` 𝐺[R/L])               ∷
+                  strErr "\nRE𝐺[R/L]:"            ∷ termErr (` reorderings-𝐺[R/L])   ∷
                   strErr "\n𝐺[w/L]:"              ∷ termErr (` 𝐺[w/L])               ∷
                   strErr "\nw:"                   ∷ termErr (` w)                    ∷
                   strErr "\nw≡R:"                 ∷ termErr (` w≡R)                  ∷
@@ -317,6 +311,20 @@ module Tactic.Reflection.Reright where
                   strErr "helper-patterns:"       ∷ termErr (` helper-patterns)      ∷
                   strErr "helper-term:"           ∷ termErr (` helper-term)          ∷
                   strErr "helper-call-args:"      ∷ termErr (` helper-call-args)     ∷
+                  [] )
+
+    reright-debug-0 : Term → Tactic
+    reright-debug-0 l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\nl≡r:"                 ∷ termErr (` (Request.l≡r q))      ∷
+                  strErr "\nA:"                   ∷ termErr (` A)                    ∷
+                  strErr "\nL:"                   ∷ termErr (` L)                    ∷
+                  strErr "\nR:"                   ∷ termErr (` R)                    ∷
+                  strErr "\nΓ:"                   ∷ termErr (` Γ)                    ∷
+                  strErr "\nlength Γ:"            ∷ termErr (` (length Γ))           ∷
+                  strErr "\n𝐺:"                   ∷ termErr (` 𝐺)                   ∷
                   [] )
 
     reright-debug-1 : Term → Tactic
