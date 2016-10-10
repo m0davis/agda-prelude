@@ -5,11 +5,74 @@ module Reright where
   open import Agda.Builtin.Reflection
   open import Tactic.Reflection
   open import Tactic.Reflection.Quote
-
+{-
   module Benchmarks where
     foo : (A : Set) (x y : A) (F : A → A → Set) →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
+          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           x ≡ y →
           F x y → F x y → F x y → F x y → F x y →
           F x y → F x y → F x y → F x y → F x y →
@@ -20,8 +83,27 @@ module Reright where
           F x y → F x y → F x y → F x y → F x y →
           F x y → F x y → F x y → F x y → F x y →
           Set
-    foo A x y F _ _ _ _ _ _ _ _ _ _ x≡y = reright-debug x≡y {!!}
-
+    foo A x y F
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+    {-
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+        _ _ _ _ _ _ _ _ _ _
+    -}
+        x≡y = reright-debug-1 x≡y {!!}
+-}
 
 
 
@@ -84,25 +166,57 @@ module Reright where
 
 -- --     -reright l = reright L≡R {!!}
 
--- --   module S₁₋₁ where
--- --     -rewrite -rewrite' -reright' -reright :
--- --       (L : Set) (R : Set) (L≡R : L ≡ R) (G : L → Set) (l : L) → (Gl : G l) (F : (A : Set) (x y : A) → G l → Set) → F L l l Gl
+  module S₁₋₁ where
+    -rewrite -rewrite' -reright' -reright :
+      (L : Set) (R : Set) (L≡R : L ≡ R) (G : L → Set) (l : L) → (Gl : G l) (F : (A : Set) (x y : A) → G l → Set) → F L l l Gl
 
--- --     -rewrite L R L≡R G l Gl F rewrite L≡R = {!debug-rewrite -rewrite 0!}
+    -rewrite L R L≡R G l Gl F rewrite L≡R = {!debug-rewrite -rewrite 0!}
 
--- --     -rewrite' L R L≡R G l Gl F = {-helper-} {!!} where
--- --       helper : {!!}
--- --       helper = {!!}
+    -rewrite' L R L≡R G l Gl F = {-helper-} {!!} where
+      helper : {!!}
+      helper = {!!}
 
--- --     -reright' L R L≡R G l Gl F = helper L L≡R G l Gl F {!!} where
--- --       helper : (w : Set) (w≡R : w ≡ R) →
--- --                (G' : w → Set) (l' : w) (Gl' : G' l') (F' : (A : Set) (x y : A) → G' l' → Set) →
--- --                ((G'' : R → Set) (l'' : R) (Gl'' : G'' l'') (F'' : (A : Set) (x y : A) → G'' l'' → Set) →
--- --                 F'' R l'' l'' Gl'') →
--- --                F' w l' l' Gl'
--- --       helper ._ refl G' l' Gl' F' φ = φ G' l' Gl' F'
+    -reright' L R L≡R G l Gl F = helper L L≡R G l Gl F {!!} where
+      helper : (w : Set) (w≡R : w ≡ R) →
+               (G' : w → Set) (l' : w) (Gl' : G' l') (F' : (A : Set) (x y : A) → G' l' → Set) →
+               ((G'' : R → Set) (l'' : R) (Gl'' : G'' l'') (F'' : (A : Set) (x y : A) → G'' l'' → Set) →
+                F'' R l'' l'' Gl'') →
+               F' w l' l' Gl'
+      helper ._ refl G' l' Gl' F' φ = φ G' l' Gl' F'
 
--- --     -reright L R L≡R G l Gl F = reright L≡R {!!}
+    -reright L R L≡R G l Gl F = reright-debug L≡R {!!}
+
+{-
+helper-type:
+{A : Set} (z : A ≡ R) (f : (z₁ : A) → Set) (z₁ : A) (z₂ : f z₁)
+(f₁ : (A₁ : Set) (x y : A₁) (z₃ : f z₁) → Set)
+(f₂
+ : (f₃ : (z₃ : R) → Set) (z₃ : R) (z₄ : f₃ z₃)
+   (f₄ : (A₁ : Set) (x y : A₁) (z₅ : f₃ z₃) → Set) →
+   f₃ R z₄ z₄ z₃) →
+f₁ A z₁ z₁ z₂
+helper-patterns:
+arg (arg-info hidden relevant) dot ∷
+arg (arg-info visible relevant) (con (quote refl) []) ∷
+arg (arg-info visible relevant) (var "_") ∷
+arg (arg-info visible relevant) (var "_") ∷
+arg (arg-info visible relevant) (var "_") ∷
+arg (arg-info visible relevant) (var "_") ∷
+arg (arg-info visible relevant) (var "_") ∷ []
+helper-term:
+var 0
+(arg (arg-info visible relevant) (var 4 []) ∷
+ arg (arg-info visible relevant) (var 3 []) ∷
+ arg (arg-info visible relevant) (var 2 []) ∷
+ arg (arg-info visible relevant) (var 1 []) ∷ [])
+helper-call-args:
+arg (arg-info hidden relevant) unknown ∷
+arg (arg-info visible relevant) (var 4 []) ∷
+arg (arg-info visible relevant) (var 3 []) ∷
+arg (arg-info visible relevant) (var 2 []) ∷
+arg (arg-info visible relevant) (var 1 []) ∷
+arg (arg-info visible relevant) (var 0 []) ∷ []
+-}
 
 -- --   module S₁₋₂ where
 -- --     module _ (L : Set) (R : Set) (L≡R : L ≡ R) (G : L → Set) (l : L) (Gl : G l) (F : (A : Set) (x y : A) → G l → Set) where

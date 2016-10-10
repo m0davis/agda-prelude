@@ -60,11 +60,42 @@ test-sm = {!refl!}
 
 -- suc (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter (smarter 0)))))))))))))))))))))))))))))))) < 0
 
+open import Prelude.Strict
 a-suc : Nat
-a-suc = suc (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S 0))))))))))))))))))))))))))))))))))))))
+a-suc = Nat.suc $! (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S 0))))))))))))))))))))))))))))))))))))))
+
+nat-cps : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
+nat-cps = helper 0 where
+  helper : ∀ {b} {B : Set b} → Nat → Nat → (Nat → B) → B
+  helper n' zero f = f n'
+  helper n' (suc n) f = helper (suc n') n f
+
+apply-cps : Nat → (Nat → Nat) → Nat → Nat
+apply-cps zero f n = n
+apply-cps (suc d) f n = nat-cps (f n) λ x → apply-cps d f x
+
+test-cps-nat : apply-cps 500 S 0 ≡ 500
+test-cps-nat = refl
 
 test-S : suc? a-suc ≡ true
 test-S = {!refl!}
+
+bool-first-arg : Bool → Nat → Bool
+bool-first-arg false _ = false
+bool-first-arg true zero = true
+bool-first-arg true (suc _) = true
+
+test-b : bool-first-arg true a-suc ≡ true
+test-b = {!refl!}
+
+length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
+length& {A = A} xs {B = B} f = helper 0 xs where
+  helper : Nat → List A → B
+  helper l [] = f l
+  helper l (x ∷ xs) = helper (suc l) xs
+
+test-length& : length& (a-suc ∷ []) (_+ 0) ≡ 1
+test-length& = refl
 
 open import Prelude
 

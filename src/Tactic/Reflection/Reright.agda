@@ -5,37 +5,30 @@ module Tactic.Reflection.Reright where
   open import Tactic.Reflection.Match
   open import Tactic.Reflection.Replace
   open import Tactic.Reflection.Quote
+{-
+  mutual
+    data _⋐ArgTerm⋐_ (t : Term) : Arg Term → Set where
+      here : (i' : ArgInfo) (t' : Term) → t ⋐ t' → t ⋐ArgTerm⋐ (arg i' t')
 
-  open import Agda.Builtin.Size
+    data _⋐ListArgTerm⋐_ (t : Term) : List (Arg Term) → Set where
+      here : (t' : Arg Term) → (ts' : List (Arg Term)) → t ⋐ArgTerm⋐ t' → t ⋐ListArgTerm⋐ (t' ∷ ts')
+      there : (t' : Arg Term) → (ts' : List (Arg Term)) → t ⋐ListArgTerm⋐ ts' → t ⋐ListArgTerm⋐ (t' ∷ ts')
 
+--    data _⋐Sort⋐_ :
 
-  data Sort'   : {_ : Size} → Set
-  data Clause' : {_ : Size} → Set
-  data Term'   : {_ : Size} → Set
-  Type' = Term'
-
-  data Term' where
-    var       : (x : Nat) {i : Size} {j : Size< i} (args : List (Arg (Term' {j}))) → Term' {i}
-    con       : (c : Name) (args : List (Arg Term')) → Term'
-    def       : (f : Name) (args : List (Arg Term')) → Term'
-    lam       : (v : Visibility) (t : Abs Term') → Term'
-    pat-lam   : (cs : List Clause') (args : List (Arg Term')) → Term'
-    pi        : (a : Arg Type') (b : Abs Type') → Term'
-    agda-sort : (s : Sort') → Term'
-    lit       : (l : Literal) → Term'
-    meta      : (x : Meta) → List (Arg Term') → Term'
-    unknown   : Term'
-
-  data Sort' where
-    set     : (t : Term') → Sort'
-    lit     : (n : Nat) → Sort'
-    unknown : Sort'
-
-  data Clause' where
-    clause        : (ps : List (Arg Pattern)) (t : Term') → Clause'
-    absurd-clause : (ps : List (Arg Pattern)) → Clause'
-
-
+    data _⋐_ (t : Term) : Term → Nat → Set where
+      here : (t' : Term) → t ≡ t' → t ⋐ t'
+      var       : (x : Nat) (args : List (Arg Term)) → t ⋐ListArgTerm⋐ args → t ⋐ (var x args)
+      con       : (c : Name) (args : List (Arg Term)) → t ⋐ListArgTerm⋐ args → t ⋐ (con c args)
+      {-
+      def       : (f : Name) (args : List (Arg Term)) → t ⋐ (def f args)
+      lam       : (v : Visibility) (t : Abs Term) → t ⋐ (lam v t)
+      pat-lam   : (cs : List Clause) (args : List (Arg Term)) → t ⋐ (pat-lam cs args)
+      pi        : (a : Arg Type) (b : Abs Type) → t ⋐ (pi a b)
+      agda-sort : (s : Sort) → t ⋐ (agda-sort s)
+      meta      : (x : Meta) → (args : List (Arg Term)) → t ⋐ ()
+      -}
+-}
   private
     Reordering = List (Nat × Nat)
 
@@ -49,12 +42,97 @@ module Tactic.Reflection.Reright where
     ... | yes _ = n-d + d
     ... | no _ = replaceVar d xns x
 
+    -- cps-style: this forces normalisation up to constructors for a List and makes stuff go faster (TODO feels hacky)
     reverse& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (List A → B) → B
     reverse& xs f = go xs [] f where
       go : ∀ {a} {A : Set a} → List A → List A → ∀ {b} {B : Set b} → (List A → B) → B
       go [] xs f = f xs
       go (m ∷ ms) xs f = go ms (m ∷ xs) f
 
+    reverse-Nat& : List Nat → ∀ {b} {B : Set b} → (List Nat → B) → B
+    reverse-Nat& xs f = go xs [] f where
+      go : List Nat → List Nat → ∀ {b} {B : Set b} → (List Nat → B) → B
+      go [] xs f = f xs
+      go (zero ∷ ms) xs f = go ms (zero ∷ xs) f
+      go ((suc m) ∷ ms) xs f = go ms ((suc m) ∷ xs) f
+
+    length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
+    length& {A = A} xs {B = B} f = helper 0 xs where
+      helper : Nat → List A → B
+      helper l [] = f l
+      helper l (x ∷ xs) = helper (suc l) xs
+
+    id-Nat'& : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
+    id-Nat'& = helper 0 where
+      helper : ∀ {b} {B : Set b} → Nat → Nat → (Nat → B) → B
+      helper n' zero f = f n'
+      helper n' (suc n) f = helper (suc n') n f
+
+    id-Reordering'& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+    id-Reordering'& = helper [] where
+      helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+      helper os' [] f = f os'
+      helper os' ((o , s) ∷ oss) f = id-Nat'& o λ o' → id-Nat'& s λ s' → helper ((o' , s') ∷ os') oss f
+
+    id-Nat& : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
+    id-Nat& zero f = f zero
+    id-Nat& (suc n) f = f (suc n)
+
+    id-Reordering& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+    id-Reordering& = helper [] where
+      helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+      helper os' [] f = f os'
+      helper os' ((zero , zero) ∷ oss) f = helper ((zero , zero) ∷ os') oss f
+      helper os' ((zero , suc s) ∷ oss) f = helper ((zero , suc s) ∷ os') oss f
+      helper os' ((suc o , zero) ∷ oss) f = helper ((suc o , zero) ∷ os') oss f
+      helper os' ((suc o , suc s) ∷ oss) f = helper ((suc o , suc s) ∷ os') oss f
+
+{-
+    id-Reordering& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+    id-Reordering& = helper [] where
+      helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+      helper os' [] f = f os'
+      helper os' ((o , s) ∷ oss) f = id-Nat& o λ o' → id-Nat& s λ s' → helper ((o' , s') ∷ os') oss f
+-}{-
+    id-Reordering& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
+    id-Reordering& [] f = f []
+    id-Reordering& ((zero , zero) ∷ oss) f = f ((zero , zero) ∷ oss)
+    id-Reordering& ((zero , suc s) ∷ oss) f = f ((zero , suc s) ∷ oss)
+    id-Reordering& ((suc o , zero) ∷ oss) f = f ((suc o , zero) ∷ oss)
+    id-Reordering& ((suc o , suc s) ∷ oss) f = f ((suc o , suc s) ∷ oss)
+-}
+{-
+    mutual
+      ID-Term& : Term → (Term → Term) → Term
+      ID-Term& (var x args) f = {!!}
+      ID-Term& (con c args) f = {!!}
+      ID-Term& (def f args) f₁ = {!!}
+      ID-Term& (lam v t) f = {!!}
+      ID-Term& (pat-lam cs args) f = {!!}
+      ID-Term& (pi a b) f = {!ID-ArgTerm& a λ a → f (pi a b)!}
+      ID-Term& (agda-sort s) f = {!!}
+      ID-Term& (lit l) f = {!!}
+      ID-Term& (meta x x₁) f = {!!}
+      ID-Term& unknown f = {!!}
+
+      ID-ArgTerm& : Arg Term → (Arg Term → Arg Term) → Arg Term
+      ID-ArgTerm& (arg i x) f = id-Term& x λ x → f (arg i x)
+
+      id-Term& : Term → ∀ {b} {B : Set b} → (Term → B) → B
+      id-Term& (var x args) f = f (var x args)
+      id-Term& (con c args) f = f (con c args)
+      id-Term& (def f args) f₁ = f₁ (def f args)
+      id-Term& (lam v t) f = f (lam v t)
+      id-Term& (pat-lam cs args) f = f (pat-lam cs args)
+      id-Term& (pi a b) f = f (pi a b)
+      id-Term& (agda-sort s) f = f (agda-sort s)
+      id-Term& (lit l) f = f (lit l)
+      id-Term& (meta x x₁) f = f (meta x x₁)
+      id-Term& unknown f = f unknown
+
+    id-ArgTerm& : Arg Term → ∀ {b} {B : Set b} → (Arg Term → B) → B
+    id-ArgTerm& (arg i x) f = id-Term& x λ x → f (arg i x)
+-}
     {-# TERMINATING #-}
     reorderVars : Reordering → Term → Term
     reorderVars os t = reverse& os (λ os → go 0 os t) where
@@ -94,13 +172,34 @@ module Tactic.Reflection.Reright where
       Γ[w/L]×indexes[Γ] = go 0 0 [] Γ where
         go : Nat → Nat → Reordering → List (Arg Type) → List (Arg Type × Nat)
         go _ _ _ [] = []
+{-
         go i j osⱼ (γ ∷ γs) =
-          let n = length Γ - 1
-              L' = weaken (2 + j) L
+          id-Nat& (length Γ - 1) λ n →
+          let γ≢l≡r = isNo $ var₀ (n - i) == l≡r
+          in
+          if γ≢l≡r then
+            (let L' = weaken (2 + j) L
+                 γ' = weaken ((n - i) + 3 + j) γ
+                 w' = var₀ (suc j)
+                 γ'[w'/L']? = γ' r'[ w' / L' ]
+            in
+            maybe
+              (go (suc i) j osⱼ γs)
+              (λ γ'[w'/L'] →
+                let γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+                in
+                (γ'[w'/L'][reordered] , i) ∷
+                  go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs)
+            γ'[w'/L']?)
+          else
+            go (suc i) j osⱼ γs
+-}
+        go i j osⱼ (γ ∷ γs) = id-Nat& (length Γ - 1) λ n →
+          let L' = weaken (2 + j) L
               γ' = weaken ((n - i) + 3 + j) γ
               w' = var₀ (suc j)
               γ'[w'/L'] = γ' r[ w' / L' ]
-              γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+              γ'[w'/L'][reordered] = (reorderVars osⱼ) <$> γ'[w'/L']
               γ≢l≡r = isNo $ var₀ (n - i) == l≡r
               γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
           in
@@ -114,12 +213,6 @@ module Tactic.Reflection.Reright where
 
       indexes[Γ] : List Nat
       indexes[Γ] = snd <$> Γ[w/L]×indexes[Γ]
-
-      length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
-      length& {A = A} xs {B = B} f = helper 0 xs where
-        helper : Nat → List A → B
-        helper l [] = f l
-        helper l (x ∷ xs) = helper (suc l) xs
 
       {-
          <---------------------- helper-type--------------------- -->
@@ -146,30 +239,28 @@ module Tactic.Reflection.Reright where
          0 ... n w w≡R 0 ... m (0 ... m → 𝐺[R/L]) → 𝐺[w/L]
       -}
       𝐺[R/L] : Type
-      𝐺[R/L] = length& Γ[w/L]×indexes[Γ] λ ∣Γᴸ∣ →
-        let os = go ∣Γᴸ∣ 0 indexes[Γ] []
+      𝐺[R/L] = length& Γ λ ∣Γ∣ → reverse& indexes[Γ] λ indexes[Γ] → length& indexes[Γ] λ ∣Γᴸ∣ →
+        let os' = os ∣Γ∣ ∣Γᴸ∣ 0 indexes[Γ] []
             𝐺' = weaken (2 * ∣Γᴸ∣ + 2) (𝐺 r[ R / L ])
         in
-          reorderVars os 𝐺'
+          id-Reordering& os' λ os' → reorderVars os' 𝐺'
         where
-
-        go : Nat → Nat → List Nat → Reordering → Reordering
-        go _ _ [] ns = ns
-        go ∣Γᴸ∣ j (i ∷ is) ns = go ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (length Γ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
+        os : Nat → Nat → Nat → List Nat → Reordering → Reordering
+        os _ _ _ [] ns = ns
+        os ∣Γ∣ ∣Γᴸ∣ j (i ∷ is) ns = os ∣Γ∣ ∣Γᴸ∣ (suc j) is $ (2 * ∣Γᴸ∣ + 2 + (∣Γ∣ - 1) - i , (∣Γᴸ∣ - 1) - j) ∷ ns
 
       𝐺[w/L] : Type
       𝐺[w/L] = length& Γ[w/L]×indexes[Γ] go where
         go : Nat → Type
         go ∣Γᴸ∣ =
-          let os = os' 0 indexes[Γ] []
+          let os' = os 0 indexes[Γ] []
               𝐺' = (weaken (3 + ∣Γᴸ∣) 𝐺) r[ var₀ (2 + ∣Γᴸ∣) / weaken (3 + ∣Γᴸ∣) L ]
           in
-            reorderVars os 𝐺'
+            id-Reordering& os' λ os' → reorderVars os' 𝐺'
           where
-
-          os' : Nat → List Nat → Reordering → Reordering
-          os' _ [] ns = ns
-          os' j (i ∷ is) ns = os' (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
+          os : Nat → List Nat → Reordering → Reordering
+          os _ [] ns = ns
+          os j (i ∷ is) ns = os (suc j) is $ (1 + ∣Γᴸ∣ + 2 + (length Γ - 1) - i , 1 + (∣Γᴸ∣ - 1) - j) ∷ ns
 
       w : Arg Type
       w = hArg A
@@ -226,6 +317,47 @@ module Tactic.Reflection.Reright where
                   strErr "helper-patterns:"       ∷ termErr (` helper-patterns)      ∷
                   strErr "helper-term:"           ∷ termErr (` helper-term)          ∷
                   strErr "helper-call-args:"      ∷ termErr (` helper-call-args)     ∷
+                  [] )
+
+    reright-debug-1 : Term → Tactic
+    reright-debug-1 l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\nΓ[w/L]×indexes[Γ]:"   ∷ termErr (` Γ[w/L]×indexes[Γ])    ∷
+                  [] )
+
+    reright-debug-i : Term → Tactic
+    reright-debug-i l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\nl≡r:"                 ∷ termErr (` (Request.l≡r q))      ∷
+                  strErr "\nindexes[Γ]:"          ∷ termErr (` indexes[Γ])           ∷
+                  [] )
+
+    reright-debug-2 : Term → Tactic
+    reright-debug-2 l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\nΓ[R/L]:"              ∷ termErr (` Γ[R/L])               ∷
+                  [] )
+
+    reright-debug-3 : Term → Tactic
+    reright-debug-3 l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\n𝐺[R/L]:"              ∷ termErr (` 𝐺[R/L])               ∷
+                  [] )
+
+    reright-debug-4 : Term → Tactic
+    reright-debug-4 l≡r hole =
+      q ← getRequest l≡r hole -|
+      let open Request q in
+      typeError ( strErr "reright-debug"          ∷
+                  strErr "\n𝐺[w/L]:"              ∷ termErr (` 𝐺[w/L])               ∷
                   [] )
 
     reright : Term → Tactic

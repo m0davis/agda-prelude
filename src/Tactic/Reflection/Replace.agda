@@ -96,3 +96,84 @@ module Tactic.Reflection.Replace where
     --go (γ ∷ Γ) (just L) (just R) = (caseF γ of _r[ L / R ]) ∷ go Γ (strengthen 1 L) (strengthen 1 R)
     go (γ ∷ Γ) (just L) (just R) = (_r[ L / R ] <$> γ) ∷ go Γ (strengthen 1 L) (strengthen 1 R)
     go Γ _ _ = Γ
+
+  record TermReplacer' (A : Set) : Set where
+    field
+      _r'[_/_] : A → Term → Term → Maybe A
+
+  open TermReplacer' ⦃ ... ⦄ public
+
+  private
+    mutual
+      {-# TERMINATING #-}
+      -- p r₀[ r / l ] = replace l with r in p
+      _r₀'[_/_] : Term → Term → Term → Maybe Term
+      p r₀'[ r / l ] with p == l
+      p r₀'[ r / l ] | yes _ = just r
+      var x args r₀'[ r / l ] | no _ =
+        var x <$> args r₂'[ r / l ]
+      con c args r₀'[ r / l ] | no _ =
+        con c <$> args r₂'[ r / l ]
+      def f args r₀'[ r / l ] | no _ =
+        def f <$> args r₂'[ r / l ]
+      lam v t r₀'[ r / l ] | no _ =
+        lam v <$> t r₁'[ weaken 1 r / weaken 1 l ]
+      pat-lam cs args r₀'[ r / l ] | no _ =
+        let w = length args
+            cs' = replaceClauses' (weaken w l) (weaken w r) cs
+            args' = args r₂'[ r / l ]
+        in
+          case cs' , args' of λ
+          { (nothing , nothing  ) → nothing
+          ; (just cs , nothing  ) → just (pat-lam cs args)
+          ; (nothing , just args) → just (pat-lam cs args)
+          ; (just cs , just args) → just (pat-lam cs args) }
+      pi a b r₀'[ r / l ] | no _ =
+        let a' = a r₁'[ r / l ]
+            b' = b r₁'[ weaken 1 r / weaken 1 l ]
+        in
+          case a' , b' of λ
+          { (nothing , nothing) → nothing
+          ; (just a  , nothing) → just (pi a b)
+          ; (nothing , just b ) → just (pi a b)
+          ; (just a  , just b ) → just (pi a b) }
+      agda-sort s r₀'[ r / l ] | no _ =
+          maybe nothing (just ∘ agda-sort) $ replaceSort' l r s
+      lit l r₀'[ r / l₁ ] | no _ = nothing
+      meta x args r₀'[ r / l ] | no _ =
+        meta x <$> args r₂'[ r / l ]
+      unknown r₀'[ r / l ] | no _ = nothing
+
+      replaceClauses' : Term → Term → List Clause → Maybe (List Clause)
+      replaceClauses' l r [] = nothing
+      replaceClauses' l r (c ∷ cs) =
+        let c' = replaceClause' l r c
+            cs' = replaceClauses' l r cs
+        in
+          case c' , cs' of λ
+          { (nothing , nothing) → nothing
+          ; (just c  , nothing) → just (c ∷ cs)
+          ; (nothing , just cs) → just (c ∷ cs)
+          ; (just c  , just cs) → just (c ∷ cs) }
+
+      replaceClause' : Term → Term → Clause → Maybe Clause
+      replaceClause' l r (clause pats x) = clause pats <$> x r₀'[ r / l ]
+      replaceClause' l r (absurd-clause pats) = nothing
+
+      replaceSort' : Term → Term → Sort → Maybe Sort
+      replaceSort' l r (set t) = set <$> t r₀'[ r / l ]
+      replaceSort' l r (lit n) = nothing
+      replaceSort' l r unknown = nothing
+
+      _r₁'[_/_] : {T₀ : Set → Set} {{_ : Functor T₀}} {{_ : Traversable T₀}} → T₀ Term → Term → Term → Maybe (T₀ Term)
+      p r₁'[ r / l ] = traverse _r₀'[ r / l ] p
+
+      _r₂'[_/_] : {T₀ T₁ : Set → Set} {{_ : Functor T₀}} {{_ : Traversable T₀}} {{_ : Functor T₁}} {{_ : Traversable T₁}} → T₁ (T₀ Term) → Term → Term → Maybe (T₁ (T₀ Term))
+      p r₂'[ r / l ] = (traverse ∘ traverse) _r₀'[ r / l ] p
+
+  instance
+    TermTR' : TermReplacer' Term
+    TermReplacer'._r'[_/_] TermTR' = _r₀'[_/_]
+
+    ArgTermTR' : TermReplacer' (Arg Term)
+    TermReplacer'._r'[_/_] ArgTermTR' = λ x r l → traverse _r₀'[ r / l ] x
