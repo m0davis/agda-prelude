@@ -175,12 +175,21 @@ cons-inj-head : ∀ {a} {A : Set a} {x : A} {xs : List A} {y : A}
 cons-inj-head refl = refl
 
 private
+
   dec-∷ : ∀ {a} {A : Set a} {x : A} {xs : List A} {y : A}
             {ys : List A} → Dec (x ≡ y) → Dec (xs ≡ ys) → Dec (x ∷ xs ≡ y ∷ ys)
   dec-∷ (yes refl) (yes refl) = yes refl
   dec-∷ _ (no neq) = no λ eq → neq (cons-inj-tail eq)
   dec-∷ (no neq) _ = no λ eq → neq (cons-inj-head eq)
-
+{-
+  dec-∷ : ∀ {a} {A : Set a} {x : A} {xs : List A} {y : A}
+            {ys : List A} → Dec (x ≡ y) → Dec (xs ≡ ys) → Dec (x ∷ xs ≡ y ∷ ys)
+  dec-∷ (no neq) _ = no λ eq → neq (cons-inj-head eq)
+  dec-∷ {a} {A} {x} {xs} {.x} {ys} (yes refl) eqs = helper eqs where
+    helper : Dec (xs ≡ ys) → Dec (x ∷ xs ≡ x ∷ ys)
+    helper (yes refl) = yes refl
+    helper (no neq) = no λ eq → neq (cons-inj-tail eq)
+-}
   eqList : ∀ {a} {A : Set a} {{EqA : Eq A}} (xs ys : List A) → Dec (xs ≡ ys)
   eqList [] [] = yes refl
   eqList [] (_ ∷ _) = no (λ ())
