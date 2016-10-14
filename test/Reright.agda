@@ -102,7 +102,7 @@ module Reright where
         _ _ _ _ _ _ _ _ _ _
         _ _ _ _ _ _ _ _ _ _
     -}
-        x≡y = reright-debug x≡y {!!}
+        x≡y = reright-debug x≡y {!!} -- 14,15
 
 
 

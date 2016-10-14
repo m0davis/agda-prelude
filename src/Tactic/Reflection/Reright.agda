@@ -50,7 +50,7 @@ private
   id-Reordering'& = helper [] where
     helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
     helper os' [] f = f os'
-    helper os' ((o , s) ∷ oss) f = id-Nat'& o λ o' → id-Nat'& s λ s' → helper ((o' , s') ∷ os') oss f
+    helper os' ((o , s) ∷ oss) f = id-Nat'& o λ { o' → id-Nat'& s λ { s' → helper ((o' , s') ∷ os') oss f } }
 
   id-Nat& : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
   id-Nat& zero f = f zero
@@ -70,63 +70,66 @@ private
 
   mutual
     id-Term& : CPS Term
-    id-Term& (var x args) f = id-ListArgTerm& args λ args → f (var x args)
-    id-Term& (con c args) f = id-ListArgTerm& args λ args → f (con c args)
-    id-Term& (def f args) f₁ = id-ListArgTerm& args λ args → f₁ (def f args)
-    id-Term& (lam v t) f = id-AbsTerm& t λ t → f (lam v t)
-    id-Term& (pat-lam cs args) f = id-ListClause& cs λ cs → id-ListArgTerm& args λ args → f (pat-lam cs args)
-    id-Term& (pi a b) f = id-ArgTerm& a λ a → id-AbsTerm& b λ b → f (pi a b)
-    id-Term& (agda-sort s) f = id-Sort& s λ s → f (agda-sort s)
+    id-Term& (var x args) f = id-ListArgTerm& args λ { args → f (var x args) }
+    id-Term& (con c args) f = id-ListArgTerm& args λ { args → f (con c args) }
+    id-Term& (def f args) f₁ = id-ListArgTerm& args λ { args → f₁ (def f args) }
+    id-Term& (lam v t) f = id-AbsTerm& t λ { t → f (lam v t) }
+    id-Term& (pat-lam cs args) f = id-ListClause& cs λ { cs → id-ListArgTerm& args λ { args → f (pat-lam cs args) } }
+    id-Term& (pi a b) f = id-ArgTerm& a λ { a → id-AbsTerm& b λ { b → f (pi a b) } }
+    id-Term& (agda-sort s) f = id-Sort& s λ { s → f (agda-sort s) }
     id-Term& (lit l) f = f (lit l)
-    id-Term& (meta x args) f = id-ListArgTerm& args λ args → f (meta x args)
+    id-Term& (meta x args) f = id-ListArgTerm& args λ { args → f (meta x args) }
     id-Term& unknown f = f unknown
 
     id-ArgTerm& : CPS (Arg Term)
-    id-ArgTerm& (arg i x) f = id-Term& x λ x → f (arg i x)
+    id-ArgTerm& (arg i x) f = id-Term& x λ { x → f (arg i x) }
 
     id-AbsTerm& : CPS (Abs Term)
-    id-AbsTerm& (abs s x) f = id-Term& x λ x → f (abs s x)
+    id-AbsTerm& (abs s x) f = id-Term& x λ { x → f (abs s x) }
 
     id-Clause& : CPS Clause
-    id-Clause& (clause ps t) f = id-Term& t λ t → f (clause ps t)
+    id-Clause& (clause ps t) f = id-Term& t λ { t → f (clause ps t) }
     id-Clause& (absurd-clause ps) f = f (absurd-clause ps)
 
     id-ListClause& : CPS (List Clause)
     id-ListClause& [] f = f []
-    id-ListClause& (x ∷ xs) f = id-Clause& x λ x → id-ListClause& xs λ xs → f (x ∷ xs)
+    id-ListClause& (x ∷ xs) f = id-Clause& x λ { x → id-ListClause& xs λ { xs → f (x ∷ xs) } }
 
     id-Sort& : CPS Sort
-    id-Sort& (set t) f = id-Term& t λ t → f (set t)
+    id-Sort& (set t) f = id-Term& t λ { t → f (set t) }
     id-Sort& (lit n) f = f (lit n)
     id-Sort& unknown f = f unknown
 
     id-ListArgTerm& : CPS (List (Arg Term))
     id-ListArgTerm& [] f = f []
-    id-ListArgTerm& (x ∷ xs) f = id-ArgTerm& x λ x → id-ListArgTerm& xs λ xs → f (x ∷ xs)
+    id-ListArgTerm& (x ∷ xs) f = id-ArgTerm& x λ { x → id-ListArgTerm& xs λ { xs → f (x ∷ xs) } }
 
   id-ListArgTermNat& : CPS (List (Arg Term × Nat))
   id-ListArgTermNat& [] f = f []
-  id-ListArgTermNat& ((x , n) ∷ xs) f = id-ArgTerm& x λ x → id-ListArgTermNat& xs λ xs → f ((x , n) ∷ xs)
+  id-ListArgTermNat& ((x , n) ∷ xs) f = id-ArgTerm& x λ { x → id-ListArgTermNat& xs λ { xs → f ((x , n) ∷ xs) } }
 
   {-# TERMINATING #-}
   reorderVars : Reordering → Term → Term
-  reorderVars os t = reverse& os (λ os → go 0 os t) where
-    go : Nat → Reordering → Term → Term
-    go d xns (var x args) = var (replaceVar d xns x) (fmap (go d xns) <$> args)
-    go d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
-    go d xns (def f args) = def f (fmap (go d xns) <$> args)
-    go d xns (lam v t) = lam v (go (suc d) xns <$> t)
-    go d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
-      reorderVarsInClause : Nat → Reordering → Clause → Clause -- TODO reorder patterns?
-      reorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
-      reorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
-    go d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
-    go d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
-    go d xns (agda-sort (lit n)) = agda-sort (lit n)
-    go d xns (agda-sort unknown) = agda-sort unknown
-    go d xns (lit l) = lit l
-    go d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
-    go d xns unknown = unknown
+  reorderVars os t = reverse& os &
+    where
+      & = (λ { os → go 0 os t })
+        where
+        go : Nat → Reordering → Term → Term
+        go d xns (var x args) = var (replaceVar d xns x) (fmap (go d xns) <$> args)
+        go d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
+        go d xns (def f args) = def f (fmap (go d xns) <$> args)
+        go d xns (lam v t) = lam v (go (suc d) xns <$> t)
+        go d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
+          reorderVarsInClause : Nat → Reordering → Clause → Clause -- TODO reorder patterns?
+          reorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
+          reorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
+        go d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
+        go d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
+        go d xns (agda-sort (lit n)) = agda-sort (lit n)
+        go d xns (agda-sort unknown) = agda-sort unknown
+        go d xns (lit l) = lit l
+        go d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
+        go d xns unknown = unknown
 
   {-
                          <------- helper-type--------- ... -->
@@ -263,9 +266,9 @@ private
       match 3 (def (quote _≡_) (hArg unknown ∷ (hArg (var₀ 0)) ∷ (vArg (var₀ 1)) ∷ (vArg (var₀ 2)) ∷ [])) L≡R -|
     𝐺 ← inferFunRange hole -|
     Γ ← getContext -|
-    reverse& Γ λ Γ →
+    reverse& Γ λ { Γ →
     case L≡R-matched of λ { (A ∷ L ∷ R ∷ []) →
-      pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = Γ ; 𝐺 = 𝐺 } }
+    pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = Γ ; 𝐺 = 𝐺 } } }
 
   record Response : Set where
     field
@@ -292,30 +295,31 @@ private
       helper-call-args' = (λ { (γ[w/L] , index[γ]) → var₀ (∣Γ∣ - index[γ] - 1) <$ γ[w/L] }) <$> reverse Γ[w/L]×indexes[Γ]
 
   getResponse : Request → Response
-  getResponse q =
-    let open Request q in
-      length& Γ λ ∣Γ∣ →
-      Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣ λ Γ[w/L]×indexes[Γ] →
-      id-ListArgTermNat& Γ[w/L]×indexes[Γ] λ Γ[w/L]×indexes[Γ] →
-      ∣Γᴸ|& Γ[w/L]×indexes[Γ] λ ∣Γᴸ∣ →
-      indexes[Γ]& Γ[w/L]×indexes[Γ] λ indexes[Γ] →
-      Γ[w/L]& Γ[w/L]×indexes[Γ] λ Γ[w/L] →
-      Γ[R/L]& R Γ[w/L] ∣Γᴸ∣ λ Γ[R/L] →
-      𝐺[R/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣ λ 𝐺[R/L]-Reordering →
-      𝐺[R/L]& 𝐺 R L 𝐺[R/L]-Reordering ∣Γᴸ∣ λ 𝐺[R/L] →
-      𝐺[w/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣ λ 𝐺[w/L]-Reordering →
-      𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣ λ 𝐺[w/L] →
-      record
-        { l≡r = l≡r
-        ; w = w& A id
-        ; w≡R = w≡R& R id
-        ; Γ[w/L] = Γ[w/L]
-        ; Γ[R/L] = Γ[R/L]
-        ; 𝐺[R/L] = 𝐺[R/L]
-        ; 𝐺[w/L] = 𝐺[w/L]
-        ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-        ; ∣Γ∣ = ∣Γ∣
-        }
+  getResponse q = go where
+    open Request q
+
+    go = length& Γ                                λ {   ∣Γ∣ →
+         Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣           λ {   Γ[w/L]×indexes[Γ] →
+         id-ListArgTermNat& Γ[w/L]×indexes[Γ]     λ {   Γ[w/L]×indexes[Γ] →
+         ∣Γᴸ|& Γ[w/L]×indexes[Γ]                  λ {   ∣Γᴸ∣ →
+         indexes[Γ]& Γ[w/L]×indexes[Γ]            λ {   indexes[Γ] →
+         Γ[w/L]& Γ[w/L]×indexes[Γ]                λ {   Γ[w/L] →
+         Γ[R/L]& R Γ[w/L] ∣Γᴸ∣                    λ {   Γ[R/L] →
+         𝐺[R/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣   λ {   𝐺[R/L]-Reordering →
+         𝐺[R/L]& 𝐺 R L 𝐺[R/L]-Reordering ∣Γᴸ∣    λ  {   𝐺[R/L] →
+         𝐺[w/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣   λ {   𝐺[w/L]-Reordering →
+         𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣      λ  {   𝐺[w/L] →
+         record
+         { l≡r = l≡r
+         ; w = w& A id
+         ; w≡R = w≡R& R id
+         ; Γ[w/L] = Γ[w/L]
+         ; Γ[R/L] = Γ[R/L]
+         ; 𝐺[R/L] = 𝐺[R/L]
+         ; 𝐺[w/L] = 𝐺[w/L]
+         ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
+         ; ∣Γ∣ = ∣Γᴸ∣{-∣Γ∣-} } }}}}}}}}}}}
+
 
 macro
   reright : Term → Tactic
@@ -327,24 +331,24 @@ macro
     unify hole (def n helper-call-args)
 
   reright-debug : Term → Tactic
-  reright-debug l≡r hole =
-    q ← getRequest l≡r hole -|
+  reright-debug l≡r' hole =
+    q ← getRequest l≡r' hole -|
     let open Response (getResponse q) in
-    ∣Γᴸ|& Γ[w/L]×indexes[Γ] λ ∣Γᴸ∣ →
-    typeError ( strErr "reright-debug"            ∷
-                strErr "Γ:"                       ∷ termErr (` (length (Request.Γ q)))    ∷
-                strErr "l≡r:"                     ∷ termErr (` (Response.l≡r (getResponse q)))    ∷
-                strErr "∣Γ∣:"                     ∷ termErr (` ∣Γ∣)                               ∷
-                strErr "∣Γᴸ∣:"                    ∷ termErr (` ∣Γᴸ∣)                              ∷
-              --strErr "Γ:"                       ∷ termErr (` (Request.Γ q))                     ∷
-              --strErr "Γ[w/L]×indexes[Γ]:"       ∷ termErr (` Γ[w/L]×indexes[Γ])                 ∷
-                strErr "\n𝐺[w/L]:"                ∷ termErr (` 𝐺[w/L])                           ∷
-              --strErr "helper-type:"             ∷ termErr helper-type                           ∷
-              --strErr "helper-type:"             ∷ termErr (` helper-type)                       ∷
-              --strErr "helper-patterns:"         ∷ termErr (` helper-patterns)                   ∷
-              --strErr "helper-term:"             ∷ termErr (` helper-term)                       ∷
-              --strErr "helper-call-args:"        ∷ termErr (` helper-call-args)                  ∷
-                [] )
+    ∣Γᴸ|& Γ[w/L]×indexes[Γ] λ { ∣Γᴸ∣ →
+      typeError ( strErr "reright-debug"            ∷
+                  strErr "Γ:"                       ∷ termErr (` (length (Request.Γ q)))    ∷
+                  strErr "l≡r:"                     ∷ termErr (` l≡r)    ∷
+                  strErr "∣Γ∣:"                     ∷ termErr (` ∣Γ∣)                               ∷
+                  strErr "∣Γᴸ∣:"                    ∷ termErr (` ∣Γᴸ∣)                              ∷
+                --strErr "Γ:"                       ∷ termErr (` (Request.Γ q))                     ∷
+                --strErr "Γ[w/L]×indexes[Γ]:"       ∷ termErr (` Γ[w/L]×indexes[Γ])                 ∷
+                --strErr "\n𝐺[w/L]:"                ∷ termErr (` 𝐺[w/L] r)                           ∷
+                --strErr "helper-type:"             ∷ termErr helper-type                          ∷
+                --strErr "helper-type:"             ∷ termErr (` helper-type)                       ∷
+                --strErr "helper-patterns:"         ∷ termErr (` helper-patterns)                   ∷
+                --strErr "helper-term:"             ∷ termErr (` helper-term)                       ∷
+                --strErr "helper-call-args:"        ∷ termErr (` helper-call-args)                  ∷
+                  [] ) }
 
 -- -- -- -- macro
 -- -- -- --   reright-debug : Term → Tactic

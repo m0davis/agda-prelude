@@ -32,3 +32,21 @@ foo 0       (λ n → (λ n → (λ n → (λ n → n) (suc 2)) (suc 1)) (suc 0)
                      (λ n → n) (suc 2)
                                 suc 2
 -}
+
+foo' : Nat → (Nat → Nat) → Nat
+foo' zero    f = f zero
+foo' (suc n) f = foo' n (fsuc f) where
+  fsuc : (Nat → Nat) → Nat → Nat
+  fsuc f n = f (suc n)
+
+test-3 : Nat
+test-3 = {!foo' 10000 (λ n → n)!}
+
+foo'' : Nat → (Nat → Nat) → Nat
+foo'' zero    f = f zero
+foo'' (suc n) f = foo' n (fsuc f) where
+  fsuc = λ f n → f (suc n)
+
+
+test-4 : Nat
+test-4 = {!foo'' 1000000 (λ { n → n })!}
