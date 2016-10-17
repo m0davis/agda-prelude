@@ -8,11 +8,7 @@ module Reright where
 
   module Benchmarks where
     foo : (A : Set) (x y : A) (F : A → A → Set) →
-          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
-          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
-          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
-          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
-          -- Set → Set → Set → Set → Set → Set → Set → Set → Set → Set →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -23,6 +19,7 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -33,6 +30,7 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -43,6 +41,7 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -53,6 +52,7 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -63,6 +63,7 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
@@ -73,15 +74,11 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
           x ≡ y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
-          F x y → F x y → F x y → F x y → F x y →
+
+          F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
+
           Set
     foo A x y F
         _ _ _ _ _ _ _ _ _ _
@@ -90,19 +87,7 @@ module Reright where
         _ _ _ _ _ _ _ _ _ _
         _ _ _ _ _ _ _ _ _ _
         _ _ _ _ _ _ _ _ _ _
-    {-
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-    -}
-        x≡y = reright-debug x≡y {!!} -- 14,15
+        x≡y = reright-debug x≡y {!!}
 
 
 

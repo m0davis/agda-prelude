@@ -95,6 +95,9 @@ private
   wkVar : Wk Nat
   wkVar lo k x = if x <? lo then x else x + k
 
+  wkVar' : Nat → Nat → Nat → Maybe Nat
+  wkVar' lo k x = case x <? lo of λ { true → nothing ; false → just (x + k) }
+
   wkArgs    : Wk (List (Arg Term))
   wkArg     : Wk (Arg Term)
   wkSort    : Wk Sort
@@ -102,14 +105,23 @@ private
   wkClause  : Wk Clause
   wkAbsTerm : Wk (Abs Term)
 
+  v'' : Nat → Nat → Nat → List (Arg Term) → Term
+  v'' lo k x = (maybe (var x) (λ { x → var x }) (wkVar' lo k x))
+
   wk : Wk Term
 --  wk lo k (var x args)  = var (wkVar lo k x) (wkArgs lo k args)
-
+  wk lo k (var x args) = maybe (var x (wkArgs lo k args)) (λ { x → var x (wkArgs lo k args) }) $ wkVar' lo k x
+{-
+  wk lo k (var x args) =  v'' lo k x (wkArgs lo k args) where
+    v' : List (Arg Term) → Term
+    v' = (maybe (var x) (λ { x → var x }) (wkVar' lo k x))
+-}
+{-
   wk lo k (var x args)
    with x <? lo
   ... | true            = var x (wkArgs lo k args)
   ... | false           = var (x + k) (wkArgs lo k args)
-
+-}
   wk lo k (con c args)  = con c (wkArgs lo k args)
   wk lo k (def f args)  = def f (wkArgs lo k args)
   wk lo k (meta x args) = meta x (wkArgs lo k args)

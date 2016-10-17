@@ -13,6 +13,13 @@ private
   weakenReordering : Reordering → Reordering
   weakenReordering [] = []
   weakenReordering ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenReordering xs
+{-
+  replaceVar : Nat → Reordering → Nat → Maybe Nat
+  replaceVar d [] x = nothing
+  replaceVar d ((x-d , n-d) ∷ xns) x with x == x-d + d
+  ... | yes _ = just (n-d + d)
+  ... | no _ = replaceVar d xns x
+-}
 
   replaceVar : Nat → Reordering → Nat → Nat
   replaceVar d [] x = x
@@ -108,6 +115,76 @@ private
   id-ListArgTermNat& [] f = f []
   id-ListArgTermNat& ((x , n) ∷ xs) f = id-ArgTerm& x λ { x → id-ListArgTermNat& xs λ { xs → f ((x , n) ∷ xs) } }
 
+  SIZE : Set → Set
+  SIZE A = A → Nat
+
+  mutual
+    size-Term : SIZE Term
+    size-Term (var x args) = suc $′ size-ListArgTerm args + x
+    size-Term (con c args) = suc $ size-ListArgTerm args
+    size-Term (def f args) = suc $ size-ListArgTerm args
+    size-Term (lam v t) = suc $ size-AbsTerm t
+    size-Term (pat-lam cs args) = suc $ size-ListClause cs
+    size-Term (pi a b) = suc (size-ArgTerm a + size-AbsTerm b)
+    size-Term (agda-sort s) = suc $ size-Sort s
+    size-Term (lit l) = 0
+    size-Term (meta x args) = suc $ size-ListArgTerm args
+    size-Term unknown = 0
+
+    size-ArgTerm : SIZE (Arg Term)
+    size-ArgTerm (arg i x) = suc $ size-Term x
+
+    size-AbsTerm : SIZE (Abs Term)
+    size-AbsTerm (abs s x) = suc $ size-Term x
+
+    size-Clause : SIZE Clause
+    size-Clause (clause ps t) = suc $ size-Term t
+    size-Clause (absurd-clause ps) = 0
+
+    size-ListClause : SIZE (List Clause)
+    size-ListClause [] = 0
+    size-ListClause (x ∷ xs) = suc $′ size-Clause x + size-ListClause xs
+
+    size-Sort : SIZE Sort
+    size-Sort (set t) = suc $ size-Term t
+    size-Sort (lit n) = 0
+    size-Sort unknown = 0
+
+    size-ListArgTerm : SIZE (List (Arg Term))
+    size-ListArgTerm [] = 0
+    size-ListArgTerm (x ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTerm xs
+
+  size-ListArgTermNat : SIZE (List (Arg Term × Nat))
+  size-ListArgTermNat [] = 0
+  size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs
+{-
+  mutual
+    reorderListArgTerm : Nat → Reordering → List (Arg Term) → Maybe (List (Arg Term))
+    reorderListArgTerm d xns [] = nothing
+    reorderListArgTerm d xns (a ∷ as) =
+      case (traverse (reorderVars d xns) a , reorderListArgTerm ) of λ
+      { }
+
+    {-# TERMINATING #-}
+    reorderVars : Nat → Reordering → Term → Maybe Term
+    reorderVars d xns (var x args) =
+      case replaceVar d xns x , traverse (reorderVars of λ
+      { just x → var x var () (fmap (go d xns) <$> args)
+    reorderVars d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
+    reorderVars d xns (def f args) = def f (fmap (go d xns) <$> args)
+    reorderVars d xns (lam v t) = lam v (go (suc d) xns <$> t)
+    reorderVars d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
+      reorderVarsreorderVarsInClause : Nat → Reordering → Clause → Maybe Clause -- TODO reorder patterns?
+      reorderVarsreorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
+      reorderVarsreorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
+    reorderVars d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
+    reorderVars d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
+    reorderVars d xns (agda-sort (lit n)) = agda-sort (lit n)
+    reorderVars d xns (agda-sort unknown) = agda-sort unknown
+    reorderVars d xns (lit l) = lit l
+    reorderVars d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
+    reorderVars d xns unknown = unknown
+-}
   {-# TERMINATING #-}
   reorderVars : Reordering → Term → Term
   reorderVars os t = reverse& os &
@@ -166,10 +243,21 @@ private
           L' = weaken (2 + j) L
           γ' = weaken ((n - i) + 3 + j) γ
           w' = var₀ (suc j)
-          γ'[w'/L'] = {-id-ArgTerm& γ' λ γ' → id-Term& L' λ L' →-} γ' r[ w' / L' ]
-          --γ'[w'/L'] = maybe γ' id γ'[w'/L']?
+          γ'[w'/L']? = γ' r'[ w' / L' ]
+          γ'[w'/L'] = maybe γ' id γ'[w'/L']?
+          γ'[w'/L'] = γ' r[ w' / L' ]
           γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
       in
+
+      case γ≢l≡r of λ
+      { true →
+        let γ'≠γ'[w'/L'][reordered] = {-maybe Bool.false (const true) γ'[w'/L']?-} isNo $ γ' == γ'[w'/L'][reordered] in
+        case γ'≠γ'[w'/L'][reordered] of λ
+        { true → go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs ((γ'[w'/L'][reordered] , i) ∷ cc) f
+        ; false → go (suc i) j osⱼ γs cc f }
+      ; false → go (suc i) j osⱼ γs cc f }
+
+{-
       if γ≢l≡r then
         --id-ArgTerm& γ'[w'/L'][reordered] (λ γ'[w'/L'][reordered] →
         (let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
@@ -182,6 +270,7 @@ private
         --)
       else
         go (suc i) j osⱼ γs cc f
+-}
 
   ∣Γᴸ|& : List (Arg Type × Nat) → ∀ {b} {B : Set b} → (Nat → B) → B
   ∣Γᴸ|& Γ[w/L]×indexes[Γ] f = length& Γ[w/L]×indexes[Γ] f
@@ -211,6 +300,8 @@ private
           γ'[R'/w'] = γ' r[ R' / w' ]
       in
         go (suc i) γs (γ'[R'/w'] ∷ cc) f
+
+-- replace weaken reorder replace weaken
 
   {-
      Γ             Γ[w/L]   Γ[R/L]
@@ -281,7 +372,8 @@ private
       ∣Γ∣ : Nat
 
     helper-type : Type
-    helper-type = telPi ((w ∷ w≡R ∷ reverse Γ[w/L]) ++ [ vArg (telPi Γ[R/L] 𝐺[R/L]) ]) 𝐺[w/L]
+    helper-type = --telPi ((w ∷ w≡R ∷ reverse Γ[w/L]) ++ [ vArg (telPi Γ[R/L] 𝐺[R/L]) ]) 𝐺[w/L]
+                  telPi (w ∷ w≡R ∷ reverse Γ[w/L]) (telPi [ vArg (telPi Γ[R/L] 𝐺[R/L]) ] 𝐺[w/L])
 
     helper-patterns : List (Arg Pattern)
     helper-patterns = (hArg dot ∷ vArg (con₀ (quote refl)) ∷ telePat Γ[w/L]) ++ [ vArg (var "_") ]
@@ -300,7 +392,7 @@ private
 
     go = length& Γ                                λ {   ∣Γ∣ →
          Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣           λ {   Γ[w/L]×indexes[Γ] →
-         id-ListArgTermNat& Γ[w/L]×indexes[Γ]     λ {   Γ[w/L]×indexes[Γ] →
+         --id-ListArgTermNat& Γ[w/L]×indexes[Γ]     λ {   Γ[w/L]×indexes[Γ] →
          ∣Γᴸ|& Γ[w/L]×indexes[Γ]                  λ {   ∣Γᴸ∣ →
          indexes[Γ]& Γ[w/L]×indexes[Γ]            λ {   indexes[Γ] →
          Γ[w/L]& Γ[w/L]×indexes[Γ]                λ {   Γ[w/L] →
@@ -318,7 +410,7 @@ private
          ; 𝐺[R/L] = 𝐺[R/L]
          ; 𝐺[w/L] = 𝐺[w/L]
          ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-         ; ∣Γ∣ = ∣Γᴸ∣{-∣Γ∣-} } }}}}}}}}}}}
+         ; ∣Γ∣ = ∣Γ∣{-∣Γ∣-} } }}}}}}}}}}
 
 
 macro
@@ -331,18 +423,33 @@ macro
     unify hole (def n helper-call-args)
 
   reright-debug : Term → Tactic
-  reright-debug l≡r' hole =
-    q ← getRequest l≡r' hole -|
+  reright-debug l≡r hole =
+    q ← getRequest l≡r hole -|
     let open Response (getResponse q) in
+    --ng ← freshName "Γ[w/L]×indexes[Γ]" -|
+    --define (vArg ng) (def₂ (quote _×_) (def₁ (quote List) (def₁ (quote Arg) (def₀ (quote Term)))) (def₀ (quote Nat))) [ clause [] (` Γ[w/L]×indexes[Γ]) ] ~|
     ∣Γᴸ|& Γ[w/L]×indexes[Γ] λ { ∣Γᴸ∣ →
       typeError ( strErr "reright-debug"            ∷
                   strErr "Γ:"                       ∷ termErr (` (length (Request.Γ q)))    ∷
-                  strErr "l≡r:"                     ∷ termErr (` l≡r)    ∷
-                  strErr "∣Γ∣:"                     ∷ termErr (` ∣Γ∣)                               ∷
-                  strErr "∣Γᴸ∣:"                    ∷ termErr (` ∣Γᴸ∣)                              ∷
+--                  strErr "Γ:"                       ∷ termErr (` (size-ListArgTerm ((weaken 1 ∘ weaken 1 ∘ weaken 1) (Request.Γ q))))    ∷
+                  --strErr "Γ:"                       ∷ termErr (` (size-ListArgTerm ((weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 ( weaken 1 (Request.Γ q)))))))))))))    ∷
+--                  strErr "Γ:"                       ∷ termErr (` (size-ListArgTerm ((weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1 ∘ weaken 1) (Request.Γ q))))    ∷
+--                  strErr "Γ:"                       ∷ termErr (` (size-ListArgTerm ((weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1 ∘ weakenFrom 1 1) (Request.Γ q))))    ∷
+
+                  --strErr "`Γ:"                      ∷ termErr (` (Request.Γ q))    ∷
+                --strErr "l≡r:"                     ∷ termErr (` l≡r)    ∷
+                --strErr "∣Γ∣:"                     ∷ termErr (` ∣Γ∣)                               ∷
+                --strErr "∣Γᴸ∣:"                    ∷ termErr (` ∣Γᴸ∣)                              ∷
                 --strErr "Γ:"                       ∷ termErr (` (Request.Γ q))                     ∷
+                --strErr "sumindex:"       ∷ termErr (` (sum (snd <$> Γ[w/L]×indexes[Γ])))                 ∷
+                --strErr "sumindex:"       ∷ termErr (` (size-ListArgTermNat (Γ[w/L]×indexes[Γ])))                 ∷
                 --strErr "Γ[w/L]×indexes[Γ]:"       ∷ termErr (` Γ[w/L]×indexes[Γ])                 ∷
-                --strErr "\n𝐺[w/L]:"                ∷ termErr (` 𝐺[w/L] r)                           ∷
+                --strErr "\n𝐺[w/L]:"                ∷ termErr (` 𝐺[w/L])                           ∷
+                --strErr "shelper-type:"             ∷ termErr (` (size-Term 𝐺[w/L]))                          ∷
+                --strErr "shelper-type:"             ∷ termErr (` (size-Term 𝐺[R/L]))                          ∷
+                --strErr "shelper-type:"             ∷ termErr (` (size-ListArgTerm Γ[w/L]))                          ∷
+                  strErr "shelper-type:"             ∷ termErr (` (size-ListArgTerm Γ[R/L]))                          ∷
+                --strErr "shelper-type:"             ∷ termErr (` (size-Term helper-type))                          ∷
                 --strErr "helper-type:"             ∷ termErr helper-type                          ∷
                 --strErr "helper-type:"             ∷ termErr (` helper-type)                       ∷
                 --strErr "helper-patterns:"         ∷ termErr (` helper-patterns)                   ∷

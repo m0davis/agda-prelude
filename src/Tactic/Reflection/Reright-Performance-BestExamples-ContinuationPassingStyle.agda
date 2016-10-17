@@ -19,7 +19,7 @@ data Term : Set where
 mutual
   sucTerm : Term → Term
   sucTerm (pi t₁ t₂) = pi (sucTerm t₁) (sucTerm t₂)
-  sucTerm (var n ts) = case n <? 0 of λ { true → var n (sucTerms ts) ; false → var (suc n) (sucTerms ts) }
+  sucTerm (var n ts) = case n <? 42 of λ { true → var n (sucTerms ts) ; false → var (suc n) (sucTerms ts) }
 
   sucTerms : List Term → List Term
   sucTerms [] = []

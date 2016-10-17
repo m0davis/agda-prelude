@@ -49,4 +49,4 @@ foo'' (suc n) f = foo' n (fsuc f) where
 
 
 test-4 : Nat
-test-4 = {!foo'' 1000000 (λ { n → n })!}
+test-4 = {!foo'' 3500000 (λ { n → n })!}
