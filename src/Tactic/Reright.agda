@@ -57,13 +57,6 @@ private
 
 private
 
-  -- cps-style: this forces normalisation up to constructors for a List and makes stuff go faster (TODO feels hacky)
-  reverse& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (List A → B) → B
-  reverse& xs f = go xs [] f where
-    go : ∀ {a} {A : Set a} → List A → List A → ∀ {b} {B : Set b} → (List A → B) → B
-    go [] xs f = f xs
-    go (m ∷ ms) xs f = go ms (m ∷ xs) f
-
   length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
   length& {A = A} xs {B = B} f = helper 0 xs where
     helper : Nat → List A → B
