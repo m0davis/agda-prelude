@@ -50,8 +50,8 @@ instance
   Semiring._*_ SemiringFloat = primFloatTimes
 
   SubFloat : Subtractive Float
-  Subtractive._-_    SubFloat   = primFloatMinus
-  Subtractive.negate SubFloat x = 0.0 - x
+  Subtractive._-_    SubFloat = primFloatMinus
+  Subtractive.negate SubFloat = primFloatNegate
 
   NegFloat : Negative Float
   Negative.Constraint NegFloat _ = ⊤

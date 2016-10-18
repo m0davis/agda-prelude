@@ -70,6 +70,17 @@ instance
   OrdMeta : Ord Meta
   OrdMeta = defaultOrd cmpMeta
 
+--- Literals ---
+
+instance
+  ShowLiteral : Show Literal
+  showsPrec {{ShowLiteral}} _ (nat n)    = shows n
+  showsPrec {{ShowLiteral}} _ (float x)  = shows x
+  showsPrec {{ShowLiteral}} _ (char c)   = shows c
+  showsPrec {{ShowLiteral}} _ (string s) = shows s
+  showsPrec {{ShowLiteral}} _ (name x)   = shows x
+  showsPrec {{ShowLiteral}} _ (meta x)   = shows x
+
 --- Terms ---
 
 pattern vArg x = arg (arg-info visible relevant) x
@@ -160,6 +171,9 @@ typeErrorS s = typeError (strErr s ∷ [])
 
 blockOnMeta! : ∀ {a} {A : Set a} → Meta → TC A
 blockOnMeta! x = commitTC >>=′ λ _ → blockOnMeta x
+
+inferNormalisedType : Term → TC Type
+inferNormalisedType t = withNormalisation true (inferType t)
 
 --- Convenient wrappers ---
 
