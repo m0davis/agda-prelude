@@ -8,6 +8,8 @@ open import Tactic.Reflection.Match
 open import Tactic.Reflection.Replace
 open import Tactic.Reflection.Quote
 
+open import Prelude.Memoization
+
 private
 
   module Debug-Size where
@@ -62,6 +64,14 @@ private
     helper : Nat → List A → B
     helper l [] = f l
     helper l (x ∷ xs) = helper (suc l) xs
+
+  length&μ : ∀ {a} {A : Set a} → (As : List A) → ∀ {b} {B : Set b} → (Nat → B) → B × Mem As
+  length&μ {A = A} xs {B = B} f = helper 0 xs where
+    helper : Nat → (As : List A) → B × Mem As
+    helper l [] = f l , putμ refl
+    helper l (x ∷ xs) =
+      case helper (suc l) xs of λ
+      { (b , (_ , xs-refl) ) → b , putμ (cong (x ∷_) xs-refl) }
 
   Reordering = List (Nat × Nat)
 
@@ -149,8 +159,11 @@ private
       else
         go (suc i) j osⱼ γs cc f
 
-  ∣Γᴸ|& : List (Arg Type × Nat) → ∀ {b} {B : Set b} → (Nat → B) → B
+  ∣Γᴸ|& : (gs : List (Arg Type × Nat)) → ∀ {b} {B : Set b} → (Nat → B) → B
   ∣Γᴸ|& Γ[w/L]×indexes[Γ] f = length& Γ[w/L]×indexes[Γ] f
+
+  ∣Γᴸ|&μ : (gs : List (Arg Type × Nat)) → ∀ {b} {B : Set b} → (Nat → B) → B × Mem gs
+  ∣Γᴸ|&μ Γ[w/L]×indexes[Γ] f = length&μ Γ[w/L]×indexes[Γ] f
 
   Γ[w/L]& : List (Arg Type × Nat) → ∀ {b} {B : Set b} → (List (Arg Type) → B) → B
   Γ[w/L]& Γ[w/L]×indexes[Γ] f = f (fst <$> Γ[w/L]×indexes[Γ])
@@ -285,8 +298,8 @@ private
          ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
          ; ∣Γ∣ = ∣Γ∣{-∣Γ∣-} } }}}}}}}}}}
 
-
 macro
+
   reright : Term → Tactic
   reright l≡r hole =
     q ← getRequest l≡r hole -|
