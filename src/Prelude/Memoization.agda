@@ -10,6 +10,9 @@ Mem x = Σ _ (_≡ x)
 μ₀ : ∀ {a b} {A : Set a} {B : Set b} → Σ A (λ _ → B) → A
 μ₀ = fst
 
+pattern getμ m = m , _
+pattern putμ s = _ , s
+
 open import Tactic.Reflection
 open import Prelude.Nat
 open import Prelude
