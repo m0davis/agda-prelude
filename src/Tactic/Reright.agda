@@ -9,6 +9,67 @@ open import Tactic.Reflection.Replace
 open import Tactic.Reflection.Quote
 
 private
+
+  module Debug-Size where
+
+    SIZE : Set → Set
+    SIZE A = A → Nat
+
+    mutual
+      size-Term : SIZE Term
+      size-Term (var x args) = suc $′ size-ListArgTerm args + x
+      size-Term (con c args) = suc $ size-ListArgTerm args
+      size-Term (def f args) = suc $ size-ListArgTerm args
+      size-Term (lam v t) = suc $ size-AbsTerm t
+      size-Term (pat-lam cs args) = suc $ size-ListClause cs
+      size-Term (pi a b) = suc (size-ArgTerm a + size-AbsTerm b)
+      size-Term (agda-sort s) = suc $ size-Sort s
+      size-Term (lit l) = 0
+      size-Term (meta x args) = suc $ size-ListArgTerm args
+      size-Term unknown = 0
+
+      size-ArgTerm : SIZE (Arg Term)
+      size-ArgTerm (arg i x) = suc $ size-Term x
+
+      size-AbsTerm : SIZE (Abs Term)
+      size-AbsTerm (abs s x) = suc $ size-Term x
+
+      size-Clause : SIZE Clause
+      size-Clause (clause ps t) = suc $ size-Term t
+      size-Clause (absurd-clause ps) = 0
+
+      size-ListClause : SIZE (List Clause)
+      size-ListClause [] = 0
+      size-ListClause (x ∷ xs) = suc $′ size-Clause x + size-ListClause xs
+
+      size-Sort : SIZE Sort
+      size-Sort (set t) = suc $ size-Term t
+      size-Sort (lit n) = 0
+      size-Sort unknown = 0
+
+      size-ListArgTerm : SIZE (List (Arg Term))
+      size-ListArgTerm [] = 0
+      size-ListArgTerm (x ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTerm xs
+
+    size-ListArgTermNat : SIZE (List (Arg Term × Nat))
+    size-ListArgTermNat [] = 0
+    size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs
+
+private
+
+  -- cps-style: this forces normalisation up to constructors for a List and makes stuff go faster (TODO feels hacky)
+  reverse& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (List A → B) → B
+  reverse& xs f = go xs [] f where
+    go : ∀ {a} {A : Set a} → List A → List A → ∀ {b} {B : Set b} → (List A → B) → B
+    go [] xs f = f xs
+    go (m ∷ ms) xs f = go ms (m ∷ xs) f
+
+  length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
+  length& {A = A} xs {B = B} f = helper 0 xs where
+    helper : Nat → List A → B
+    helper l [] = f l
+    helper l (x ∷ xs) = helper (suc l) xs
+
   Reordering = List (Nat × Nat)
 
   weakenReordering : Reordering → Reordering
@@ -21,186 +82,28 @@ private
   ... | yes _ = n-d + d
   ... | no _ = replaceVar d xns x
 
-  -- cps-style: this forces normalisation up to constructors for a List and makes stuff go faster (TODO feels hacky)
-  reverse& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (List A → B) → B
-  reverse& xs f = go xs [] f where
-    go : ∀ {a} {A : Set a} → List A → List A → ∀ {b} {B : Set b} → (List A → B) → B
-    go [] xs f = f xs
-    go (m ∷ ms) xs f = go ms (m ∷ xs) f
-
-  reverse-Nat& : List Nat → ∀ {b} {B : Set b} → (List Nat → B) → B
-  reverse-Nat& xs f = go xs [] f where
-    go : List Nat → List Nat → ∀ {b} {B : Set b} → (List Nat → B) → B
-    go [] xs f = f xs
-    go (zero ∷ ms) xs f = go ms (zero ∷ xs) f
-    go ((suc m) ∷ ms) xs f = go ms ((suc m) ∷ xs) f
-
-  length& : ∀ {a} {A : Set a} → List A → ∀ {b} {B : Set b} → (Nat → B) → B
-  length& {A = A} xs {B = B} f = helper 0 xs where
-    helper : Nat → List A → B
-    helper l [] = f l
-    helper l (x ∷ xs) = helper (suc l) xs
-
-  id-Nat'& : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
-  id-Nat'& = helper 0 where
-    helper : ∀ {b} {B : Set b} → Nat → Nat → (Nat → B) → B
-    helper n' zero f = f n'
-    helper n' (suc n) f = helper (suc n') n f
-
-  id-Reordering'& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
-  id-Reordering'& = helper [] where
-    helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
-    helper os' [] f = f os'
-    helper os' ((o , s) ∷ oss) f = id-Nat'& o λ { o' → id-Nat'& s λ { s' → helper ((o' , s') ∷ os') oss f } }
-
-  id-Nat& : ∀ {b} {B : Set b} → Nat → (Nat → B) → B
-  id-Nat& zero f = f zero
-  id-Nat& (suc n) f = f (suc n)
-
-  id-Reordering& : Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
-  id-Reordering& = helper [] where
-    helper : Reordering → Reordering → ∀ {b} {B : Set b} → (Reordering → B) → B
-    helper os' [] f = f os'
-    helper os' ((zero , zero) ∷ oss) f = helper ((zero , zero) ∷ os') oss f
-    helper os' ((zero , suc s) ∷ oss) f = helper ((zero , suc s) ∷ os') oss f
-    helper os' ((suc o , zero) ∷ oss) f = helper ((suc o , zero) ∷ os') oss f
-    helper os' ((suc o , suc s) ∷ oss) f = helper ((suc o , suc s) ∷ os') oss f
-
-  CPS : Set → Set₁
-  CPS X = X → ∀ {B : Set} → (X → B) → B
-
-  mutual
-    id-Term& : CPS Term
-    id-Term& (var x args) f = id-ListArgTerm& args λ { args → f (var x args) }
-    id-Term& (con c args) f = id-ListArgTerm& args λ { args → f (con c args) }
-    id-Term& (def f args) f₁ = id-ListArgTerm& args λ { args → f₁ (def f args) }
-    id-Term& (lam v t) f = id-AbsTerm& t λ { t → f (lam v t) }
-    id-Term& (pat-lam cs args) f = id-ListClause& cs λ { cs → id-ListArgTerm& args λ { args → f (pat-lam cs args) } }
-    id-Term& (pi a b) f = id-ArgTerm& a λ { a → id-AbsTerm& b λ { b → f (pi a b) } }
-    id-Term& (agda-sort s) f = id-Sort& s λ { s → f (agda-sort s) }
-    id-Term& (lit l) f = f (lit l)
-    id-Term& (meta x args) f = id-ListArgTerm& args λ { args → f (meta x args) }
-    id-Term& unknown f = f unknown
-
-    id-ArgTerm& : CPS (Arg Term)
-    id-ArgTerm& (arg i x) f = id-Term& x λ { x → f (arg i x) }
-
-    id-AbsTerm& : CPS (Abs Term)
-    id-AbsTerm& (abs s x) f = id-Term& x λ { x → f (abs s x) }
-
-    id-Clause& : CPS Clause
-    id-Clause& (clause ps t) f = id-Term& t λ { t → f (clause ps t) }
-    id-Clause& (absurd-clause ps) f = f (absurd-clause ps)
-
-    id-ListClause& : CPS (List Clause)
-    id-ListClause& [] f = f []
-    id-ListClause& (x ∷ xs) f = id-Clause& x λ { x → id-ListClause& xs λ { xs → f (x ∷ xs) } }
-
-    id-Sort& : CPS Sort
-    id-Sort& (set t) f = id-Term& t λ { t → f (set t) }
-    id-Sort& (lit n) f = f (lit n)
-    id-Sort& unknown f = f unknown
-
-    id-ListArgTerm& : CPS (List (Arg Term))
-    id-ListArgTerm& [] f = f []
-    id-ListArgTerm& (x ∷ xs) f = id-ArgTerm& x λ { x → id-ListArgTerm& xs λ { xs → f (x ∷ xs) } }
-
-  id-ListArgTermNat& : CPS (List (Arg Term × Nat))
-  id-ListArgTermNat& [] f = f []
-  id-ListArgTermNat& ((x , n) ∷ xs) f = id-ArgTerm& x λ { x → id-ListArgTermNat& xs λ { xs → f ((x , n) ∷ xs) } }
-
-  SIZE : Set → Set
-  SIZE A = A → Nat
-
-  mutual
-    size-Term : SIZE Term
-    size-Term (var x args) = suc $′ size-ListArgTerm args + x
-    size-Term (con c args) = suc $ size-ListArgTerm args
-    size-Term (def f args) = suc $ size-ListArgTerm args
-    size-Term (lam v t) = suc $ size-AbsTerm t
-    size-Term (pat-lam cs args) = suc $ size-ListClause cs
-    size-Term (pi a b) = suc (size-ArgTerm a + size-AbsTerm b)
-    size-Term (agda-sort s) = suc $ size-Sort s
-    size-Term (lit l) = 0
-    size-Term (meta x args) = suc $ size-ListArgTerm args
-    size-Term unknown = 0
-
-    size-ArgTerm : SIZE (Arg Term)
-    size-ArgTerm (arg i x) = suc $ size-Term x
-
-    size-AbsTerm : SIZE (Abs Term)
-    size-AbsTerm (abs s x) = suc $ size-Term x
-
-    size-Clause : SIZE Clause
-    size-Clause (clause ps t) = suc $ size-Term t
-    size-Clause (absurd-clause ps) = 0
-
-    size-ListClause : SIZE (List Clause)
-    size-ListClause [] = 0
-    size-ListClause (x ∷ xs) = suc $′ size-Clause x + size-ListClause xs
-
-    size-Sort : SIZE Sort
-    size-Sort (set t) = suc $ size-Term t
-    size-Sort (lit n) = 0
-    size-Sort unknown = 0
-
-    size-ListArgTerm : SIZE (List (Arg Term))
-    size-ListArgTerm [] = 0
-    size-ListArgTerm (x ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTerm xs
-
-  size-ListArgTermNat : SIZE (List (Arg Term × Nat))
-  size-ListArgTermNat [] = 0
-  size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs
-{-
-  mutual
-    reorderListArgTerm : Nat → Reordering → List (Arg Term) → Maybe (List (Arg Term))
-    reorderListArgTerm d xns [] = nothing
-    reorderListArgTerm d xns (a ∷ as) =
-      case (traverse (reorderVars d xns) a , reorderListArgTerm ) of λ
-      { }
-
-    {-# TERMINATING #-}
-    reorderVars : Nat → Reordering → Term → Maybe Term
-    reorderVars d xns (var x args) =
-      case replaceVar d xns x , traverse (reorderVars of λ
-      { just x → var x var () (fmap (go d xns) <$> args)
-    reorderVars d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
-    reorderVars d xns (def f args) = def f (fmap (go d xns) <$> args)
-    reorderVars d xns (lam v t) = lam v (go (suc d) xns <$> t)
-    reorderVars d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
-      reorderVarsreorderVarsInClause : Nat → Reordering → Clause → Maybe Clause -- TODO reorder patterns?
-      reorderVarsreorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
-      reorderVarsreorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
-    reorderVars d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
-    reorderVars d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
-    reorderVars d xns (agda-sort (lit n)) = agda-sort (lit n)
-    reorderVars d xns (agda-sort unknown) = agda-sort unknown
-    reorderVars d xns (lit l) = lit l
-    reorderVars d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
-    reorderVars d xns unknown = unknown
--}
   {-# TERMINATING #-}
   reorderVars : Reordering → Term → Term
-  reorderVars os t = reverse& os &
+  reorderVars os t = go 0 os t
+
     where
-      & = (λ { os → go 0 os t })
-        where
-        go : Nat → Reordering → Term → Term
-        go d xns (var x args) = var (replaceVar d xns x) (fmap (go d xns) <$> args)
-        go d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
-        go d xns (def f args) = def f (fmap (go d xns) <$> args)
-        go d xns (lam v t) = lam v (go (suc d) xns <$> t)
-        go d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
-          reorderVarsInClause : Nat → Reordering → Clause → Clause -- TODO reorder patterns?
-          reorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
-          reorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
-        go d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
-        go d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
-        go d xns (agda-sort (lit n)) = agda-sort (lit n)
-        go d xns (agda-sort unknown) = agda-sort unknown
-        go d xns (lit l) = lit l
-        go d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
-        go d xns unknown = unknown
+
+    go : Nat → Reordering → Term → Term
+    go d xns (var x args) = var (replaceVar d xns x) (fmap (go d xns) <$> args)
+    go d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
+    go d xns (def f args) = def f (fmap (go d xns) <$> args)
+    go d xns (lam v t) = lam v (go (suc d) xns <$> t)
+    go d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
+      reorderVarsInClause : Nat → Reordering → Clause → Clause -- TODO reorder patterns?
+      reorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
+      reorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
+    go d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
+    go d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
+    go d xns (agda-sort (lit n)) = agda-sort (lit n)
+    go d xns (agda-sort unknown) = agda-sort unknown
+    go d xns (lit l) = lit l
+    go d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
+    go d xns unknown = unknown
 
   {-
                          <------- helper-type--------- ... -->
@@ -209,29 +112,33 @@ private
 
      γ' = γ'ⱼ
   -}
+
   {-
                            <------- helper-type--------- ... -->
      <------- Γ --------->       <------ Γ[w/L] ------>
      γₙ γₙ₋₁ ... γᵢ ... γ₀ w w≡R γ'₀ γ'₁ ... γ'ⱼ ... γ'ₘ
 
      γ' = γ'ⱼ
+  -}
 
-
-
-
+  {-
                          <-------- helper-type---------- ... -->
      <------- Γ ------->        <------- Γ[w/L] ------->
      γ₀ γ₁ ... γᵢ ... γₙ w w≡R γ'ₘ γ'ₘ₋₁ ... γ'ⱼ ... γ'₀
 
      γ' = γ'ⱼ
   -}
+
   Γ[w/L]×indexes[Γ]&  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → ∀ {B : Set} → (List (Arg Type × Nat) → B) → B
   Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣ f =
     go 0 0 [] Γ [] f
+
     where
+
     go : Nat → Nat → Reordering → List (Arg Type) → List (Arg Type × Nat) → ∀ {B : Set} → (List (Arg Type × Nat) → B) → B
     go _ _ _   []       cc f = f cc
     go i j osⱼ (γ ∷ γs) cc f =
+
       let n = ∣Γ∣ - 1
           γ≢l≡r = isNo $ var₀ (n - i) == l≡r
           L' = weaken (2 + j) L
@@ -241,30 +148,13 @@ private
           γ'[w'/L'] = maybe γ' id γ'[w'/L']?
           γ'[w'/L'] = γ' r[ w' / L' ]
           γ'[w'/L'][reordered] = reorderVars osⱼ <$> γ'[w'/L']
+          γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
       in
 
-      case γ≢l≡r of λ
-      { true →
-        let γ'≠γ'[w'/L'][reordered] = {-maybe Bool.false (const true) γ'[w'/L']?-} isNo $ γ' == γ'[w'/L'][reordered] in
-        case γ'≠γ'[w'/L'][reordered] of λ
-        { true → go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs ((γ'[w'/L'][reordered] , i) ∷ cc) f
-        ; false → go (suc i) j osⱼ γs cc f }
-      ; false → go (suc i) j osⱼ γs cc f }
-
-{-
-      if γ≢l≡r then
-        --id-ArgTerm& γ'[w'/L'][reordered] (λ γ'[w'/L'][reordered] →
-        (let γ'≠γ'[w'/L'][reordered] = isNo $ γ' == γ'[w'/L'][reordered]
-        in
-        if γ'≠γ'[w'/L'][reordered] then
-          go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs ((γ'[w'/L'][reordered] , i) ∷ cc) f
-        else
-          go (suc i) j osⱼ γs cc f
-        )
-        --)
+      if γ≢l≡r && γ'≠γ'[w'/L'][reordered] then
+        go (suc i) (suc j) ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) γs ((γ'[w'/L'][reordered] , i) ∷ cc) f
       else
         go (suc i) j osⱼ γs cc f
--}
 
   ∣Γᴸ|& : List (Arg Type × Nat) → ∀ {b} {B : Set b} → (Nat → B) → B
   ∣Γᴸ|& Γ[w/L]×indexes[Γ] f = length& Γ[w/L]×indexes[Γ] f
@@ -294,8 +184,6 @@ private
           γ'[R'/w'] = γ' r[ R' / w' ]
       in
         go (suc i) γs (γ'[R'/w'] ∷ cc) f
-
--- replace weaken reorder replace weaken
 
   {-
      Γ             Γ[w/L]   Γ[R/L]
@@ -351,9 +239,8 @@ private
       match 3 (def (quote _≡_) (hArg unknown ∷ (hArg (var₀ 0)) ∷ (vArg (var₀ 1)) ∷ (vArg (var₀ 2)) ∷ [])) L≡R -|
     𝐺 ← inferFunRange hole -|
     Γ ← getContext -|
-    reverse& Γ λ { Γ →
     case L≡R-matched of λ { (A ∷ L ∷ R ∷ []) →
-    pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = Γ ; 𝐺 = 𝐺 } } }
+    pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = reverse Γ ; 𝐺 = 𝐺 } }
 
   record Response : Set where
     field
@@ -386,7 +273,6 @@ private
 
     go = length& Γ                                λ {   ∣Γ∣ →
          Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣           λ {   Γ[w/L]×indexes[Γ] →
-         --id-ListArgTermNat& Γ[w/L]×indexes[Γ]     λ {   Γ[w/L]×indexes[Γ] →
          ∣Γᴸ|& Γ[w/L]×indexes[Γ]                  λ {   ∣Γᴸ∣ →
          indexes[Γ]& Γ[w/L]×indexes[Γ]            λ {   indexes[Γ] →
          Γ[w/L]& Γ[w/L]×indexes[Γ]                λ {   Γ[w/L] →
@@ -442,7 +328,7 @@ macro
                 --strErr "shelper-type:"             ∷ termErr (` (size-Term 𝐺[w/L]))                          ∷
                 --strErr "shelper-type:"             ∷ termErr (` (size-Term 𝐺[R/L]))                          ∷
                 --strErr "shelper-type:"             ∷ termErr (` (size-ListArgTerm Γ[w/L]))                          ∷
-                  strErr "shelper-type:"             ∷ termErr (` (size-ListArgTerm Γ[R/L]))                          ∷
+                --strErr "shelper-type:"             ∷ termErr (` (size-ListArgTerm Γ[R/L]))                          ∷
                 --strErr "shelper-type:"             ∷ termErr (` (size-Term helper-type))                          ∷
                 --strErr "helper-type:"             ∷ termErr helper-type                          ∷
                 --strErr "helper-type:"             ∷ termErr (` helper-type)                       ∷
