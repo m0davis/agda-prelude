@@ -1389,72 +1389,59 @@ getRequest =
   case ListArgTermμ the-Γ of λ { (getμ Γ) →
   Γ }
 
-record Response : Set where
-  field
-    Γ[w/L]×indexes[Γ] : List (Arg Type × Nat)
-    ∣Γ∣ : Nat
+after-operation : Nat → List (Arg Type × Nat) → List Nat
+after-operation ∣Γ∣ Γ[w/L]×indexes[Γ] = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
 
-  after-operation : List Nat
-  after-operation = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
-
-Responseμ : (r : Response) → Mem r
-Responseμ record { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } = putμ refl
-
-getResponse-reg : List (Arg Type) → Response
+getResponse-reg : List (Arg Type) → Nat × List (Arg Type × Nat)
 getResponse-reg q =
   case length q                                of λ   { ∣Γ∣ →
   case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
   case before-operation q                      of λ   { Γ[w/L]×indexes[Γ] →
   case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-     record
-     { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-     ; ∣Γ∣ = ∣Γ∣ } }}}}
+  ∣Γ∣ , Γ[w/L]×indexes[Γ] }}}}
 
-getResponse-foo : List (Arg Type) → Response
+getResponse-foo : List (Arg Type) → Nat × List (Arg Type × Nat)
 getResponse-foo q =
   case length q                                of λ   { ∣Γ∣ →
   case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
   case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
   case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-     record
-     { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-     ; ∣Γ∣ = ∣Γ∣ } }}}}
-
-macro
-  reright-debug-show-before : Tactic
-  reright-debug-show-before hole =
-    case Responseμ (getResponse-reg getRequest) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` (Γ[w/L]×indexes[Γ]))                 ∷
-                [] ) }
+  ∣Γ∣ , Γ[w/L]×indexes[Γ] }}}}
 
 pure-reg-after : List Nat
 pure-reg-after =
   case getRequest of λ { q →
-  case Responseμ (getResponse-reg q) of λ { (getμ r) →
-  let open Response r in
-  after-operation } }
+  uncurry after-operation (getResponse-reg q) }
 
-pure-reg-before : Nat
-pure-reg-before =
+pure-reg-after' : List Nat
+pure-reg-after' =
   case getRequest of λ { q →
-  case Responseμ (getResponse-reg q) of λ { (getμ r) →
-  let open Response r in
-  size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
+  case getResponse-reg q of λ { (l , ts) →
+  case ListArgTerm×Natμ ts of λ { (getμ ts) →
+  case Natμ l of λ { (getμ l) →
+  after-operation l ts
+  }}}}
 
-pure-foo-after : List Nat
-pure-foo-after =
-  case getRequest of λ { q →
-  case Responseμ (getResponse-foo q) of λ { (getμ r) →
-  let open Response r in
-  after-operation } }
+-- pure-reg-before : Nat
+-- pure-reg-before =
+--   case getRequest of λ { q →
+--   case Responseμ (getResponse-reg q) of λ { (getμ r) →
+--   let open Response r in
+--   size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
 
-pure-foo-before : Nat
-pure-foo-before =
-  case getRequest of λ { q →
-  case Responseμ (getResponse-foo q) of λ { (getμ r) →
-  let open Response r in
-  size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
+-- pure-foo-after : List Nat
+-- pure-foo-after =
+--   case getRequest of λ { q →
+--   case Responseμ (getResponse-foo q) of λ { (getμ r) →
+--   let open Response r in
+--   after-operation } }
+
+-- pure-foo-before : Nat
+-- pure-foo-before =
+--   case getRequest of λ { q →
+--   case Responseμ (getResponse-foo q) of λ { (getμ r) →
+--   let open Response r in
+--   size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
 
 --benchmark-pure-foo-before : Nat
 --benchmark-pure-foo-before = unquote (λ hole → unify hole (` pure-foo-before))
@@ -1472,7 +1459,7 @@ foo : Set × Set × Set × Set
 foo = {!pure-foo-before!} ,
       {!pure-foo-after!} ,
       {!pure-reg-before!} ,
-      {!pure-reg-after!}
+      {!pure-reg-after'!}
 
       -- using full Natμ
       -- Typing.CheckRHS
