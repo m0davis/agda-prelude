@@ -677,18 +677,6 @@ private
 
 private
 
-  Reordering = List (Nat × Nat)
-
-  weakenReordering : (os : Reordering) → Reordering
-  weakenReordering [] = []
-  weakenReordering ((x , n) ∷ xs) = (suc x , suc n) ∷ weakenReordering xs
-
-  Reorderingμ : (os : Reordering) → Mem os
-  Reorderingμ [] = putμ refl
-  Reorderingμ ((from , to) ∷ oss)
-   with Reorderingμ oss
-  ... | putμ oss-refl = putμ (cong₂ _∷_ (cong₂ _,_ refl refl) oss-refl)
-
   Natμ : (n : Nat) → Mem n
   Natμ zero = putμ refl
   Natμ (suc n) = -- putμ (cong suc refl) --
@@ -762,71 +750,15 @@ private
     { (putμ at-refl , putμ n-refl , putμ atns-refl) →
       putμ (cong₂ _∷_ (cong₂ _,_ at-refl n-refl) atns-refl) }
 
-  replaceVar : Nat → (os : Reordering) → (x : Nat) → Nat
-  replaceVar d [] x = x
-  replaceVar d ((x-d , n-d) ∷ xns) x = ifYes x == x-d + d then n-d + d else replaceVar d xns x
-
-  {-# TERMINATING #-}
-  reorderVars : Reordering → Term → Term
-  reorderVars os t = go 0 os t
-
-    where
-
-    go : Nat → (xns : Reordering) → (t' : Term) → Term
-    go d xns (var x args) = var (replaceVar d xns x) (fmap (go d xns) <$> args)
-    go d xns (con c args) = con c ((fmap ∘ fmap) (go d xns) args)
-    go d xns (def f args) = def f (fmap (go d xns) <$> args)
-    go d xns (lam v t) = lam v (go (suc d) xns <$> t)
-    go d xns (pat-lam cs args) = pat-lam (fmap (reorderVarsInClause d xns) cs) ((fmap ∘ fmap) (go d xns) args) where
-      reorderVarsInClause : Nat → Reordering → Clause → Clause -- TODO reorder patterns?
-      reorderVarsInClause d xns (clause ps t) = clause ps (go d xns t)
-      reorderVarsInClause d xns (absurd-clause ps) = absurd-clause ps
-    go d xns (pi a b) = pi (go d xns <$> a) (go (suc d) xns <$> b)
-    go d xns (agda-sort (set t)) = agda-sort (set (go d xns t))
-    go d xns (agda-sort (lit n)) = agda-sort (lit n)
-    go d xns (agda-sort unknown) = agda-sort unknown
-    go d xns (lit l) = lit l
-    go d xns (meta x args) = meta x $ (fmap ∘ fmap) (go d xns) args
-    go d xns unknown = unknown
-
   Γ[w/L]×indexes[Γ]&'  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → List (Arg Type × Nat)
   Γ[w/L]×indexes[Γ]&' l≡r L [] ∣Γ∣ = []
   Γ[w/L]×indexes[Γ]&' l≡r L (γ ∷ γs) ∣Γ∣ =
     (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&' l≡r L γs ∣Γ∣
 
-  Γ[w/L]×indexes[Γ]&  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → List (Arg Type × Nat)
-  Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣ =
-    go 0 0 [] Γ []
-
-    where
-
-    go : Nat → Nat → (osⱼ : Reordering) → (γs : List (Arg Type)) → List (Arg Type × Nat) → List (Arg Type × Nat)
-    go _ _ _   []       cc = cc
-    go i j osⱼ (γ ∷ γs) cc =
-      let n = ∣Γ∣ - 1
-          γ≢l≡r = isNo $ var₀ (n - i) == l≡r
-          w' = var₀ (suc j)
-      in
-      case ArgTermμ (weaken ((n - i) + 3 + j) γ) of λ { (getμ γ') →
-      case Termμ (weaken (2 + j) L) of λ { (getμ L') →
-      case ArgTermμ (γ' r[ w' / L' ]) of λ { (getμ γ'[w'/L']) →
-      let γ'[w'/L'][reordered] = {-reorderVars osⱼ <$>-} γ'[w'/L']
-          γ≢l≡r&&γ'≠γ'[w'/L'][reordered] : Maybe (Arg Type)
-          γ≢l≡r&&γ'≠γ'[w'/L'][reordered] =
-            if γ≢l≡r then
-              case γ' ==μ γ'[w'/L'][reordered] of (λ
-              { (yes _ , _) → nothing
-              ; (no _ , _ , getμ γ'[w'/L'][reordered]) → just γ'[w'/L'][reordered] })
-            else
-              nothing
-      in
-      case γ≢l≡r&&γ'≠γ'[w'/L'][reordered] of λ
-      { (just γ'[w'/L'][reordered]) →
-        case Reorderingμ ((j + 3 + n - i , 0) ∷ weakenReordering osⱼ) of λ
-        { (getμ osⱼ') →
-          go (suc i) (suc j) osⱼ' γs ((γ'[w'/L'][reordered] , i) ∷ cc) }
-      ; nothing →
-        go (suc i) j osⱼ γs cc }}}}
+  Γ[w/L]×indexes[Γ]&'' : List (Arg Type) → List (Arg Type × Nat)
+  Γ[w/L]×indexes[Γ]&'' [] = []
+  Γ[w/L]×indexes[Γ]&'' (γ ∷ γs) =
+    (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&'' γs
 
   record Request : Set where
     field
@@ -866,19 +798,8 @@ private
     in
     case length Γ                                of λ   { ∣Γ∣ →
     case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
-    case Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
-    case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-       record
-       { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-       ; ∣Γ∣ = ∣Γ∣ } }}}}
-
-  getResponse' : Request → Response
-  getResponse' q =
-    let open Request q
-    in
-    case length Γ                                of λ   { ∣Γ∣ →
-    case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
-    case Γ[w/L]×indexes[Γ]&' l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
+--    case Γ[w/L]×indexes[Γ]&'' l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
+    case Γ[w/L]×indexes[Γ]&'' Γ                  of λ  { Γ[w/L]×indexes[Γ] →
     case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
        record
        { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
@@ -906,15 +827,6 @@ macro
     typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
                 [] ) }
 
-  reright-debug-reg-before : Term → Tactic
-  reright-debug-reg-before l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
-                [] ) }
-
   reright-debug-foo-after : Term → Tactic
   reright-debug-foo-after l≡r hole =
     q ← getRequest l≡r hole -|
@@ -924,29 +836,20 @@ macro
     typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
                 [] ) }
 
+  reright-debug-reg-before : Term → Tactic
+  reright-debug-reg-before l≡r hole =
+    q ← getRequest l≡r hole -|
+    let open Request q in
+    case Responseμ (getResponse q) of λ { (getμ r) →
+    let open Response r in
+    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                  ∷
+                [] ) }
+
   reright-debug-reg-after : Term → Tactic
   reright-debug-reg-after l≡r hole =
     q ← getRequest l≡r hole -|
     let open Request q in
     case Responseμ (getResponse q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
-                [] ) }
-
-  reright-debug-reg'-before : Term → Tactic
-  reright-debug-reg'-before l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse' q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                  ∷
-                [] ) }
-
-  reright-debug-reg'-after : Term → Tactic
-  reright-debug-reg'-after l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse' q) of λ { (getμ r) →
     let open Response r in
     typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
                 [] ) }
@@ -976,7 +879,7 @@ module Benchmarks where
   foo : FOO
   foo A x y F
       _ _ _ _ _ _ _ _ _ _
-      x≡y = reright-debug-reg'-after x≡y {!!}
+      x≡y = reright-debug-reg-after x≡y {!!}
       -- using full Natμ
       -- Typing.CheckRHS
       -- reright-debug-reg-after               11,869ms
