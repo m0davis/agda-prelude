@@ -671,7 +671,7 @@ private
 
     size-ListArgTermNat : SIZE (List (Arg Term × Nat))
     size-ListArgTermNat [] = 0
-    size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs
+    size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs + n
 
   open Debug-Size
 
@@ -1159,8 +1159,7 @@ macro
     let open Request q in
     case Responseμ (getResponse-foo q) of λ { (getμ r) →
     let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "Γ[w/L]×indexes[Γ]:"       ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
+    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
                 [] ) }
 
   reright-debug-reg-before : Term → Tactic
@@ -1169,8 +1168,7 @@ macro
     let open Request q in
     case Responseμ (getResponse q) of λ { (getμ r) →
     let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "Γ[w/L]×indexes[Γ]:"       ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
+    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
                 [] ) }
 
   reright-debug-foo-after : Term → Tactic
@@ -1179,8 +1177,7 @@ macro
     let open Request q in
     case Responseμ (getResponse-foo q) of λ { (getμ r) →
     let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "helper-call-args:"        ∷ termErr (` (size-ListArgTerm stupid-test))                  ∷
+    typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
                 [] ) }
 
   reright-debug-reg-after : Term → Tactic
@@ -1189,28 +1186,7 @@ macro
     let open Request q in
     case Responseμ (getResponse q) of λ { (getμ r) →
     let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "helper-call-args:"        ∷ termErr (` (size-ListArgTerm stupid-test))                  ∷
-                [] ) }
-
-  reright-debug-foo-after! : Term → Tactic
-  reright-debug-foo-after! l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse-foo q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "helper-call-args:"        ∷ termErr (` dumb-test)                  ∷
-                [] ) }
-
-  reright-debug-reg-after! : Term → Tactic
-  reright-debug-reg-after! l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷
-                strErr "helper-call-args:"        ∷ termErr (` dumb-test)                  ∷
+    typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
                 [] ) }
 
 
@@ -1238,18 +1214,13 @@ module Benchmarks where
   foo : FOO
   foo A x y F
       _ _ _ _ _ _ _ _ _ _
-      x≡y = reright-debug-foo-after! x≡y {!!}
-
-      -- using partial Natμ
-      -- 2 reright-debug-foo-before
-      -- 2 reright-debug-foo-after
-      -- 2 reright-debug-reg-before
-      -- 5 reright-debug-reg-after
-
-      -- 2 reright-debug-foo-before
-      -- 2 reright-debug-foo-after
-      -- 3 reright-debug-reg-before
-      -- 11 reright-debug-reg-after
+      x≡y = reright-debug-foo-after x≡y {!!}
+      -- using full Natμ
+      -- Typing.CheckRHS
+      -- reright-debug-reg-after               11,869ms
+      -- reright-debug-reg-before              2,796ms
+      -- reright-debug-foo-before              1,746ms
+      -- reright-debug-foo-after               2,240ms
 
 {-
 macro
