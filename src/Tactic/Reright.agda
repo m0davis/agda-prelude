@@ -1034,6 +1034,7 @@ private
     pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = reverse-Γ ; 𝐺 = 𝐺 } } } }
 
   record Response : Set where
+    no-eta-equality
     field
       l≡r : Term
       w : Arg Type
@@ -1065,7 +1066,8 @@ private
     dumb-test = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
 
   Responseμ : (r : Response) → Mem r
-  Responseμ record { l≡r = l≡r ; w = w ; w≡R = w≡R ; Γ[w/L] = Γ[w/L] ; Γ[R/L] = Γ[R/L] ; 𝐺[R/L] = 𝐺[R/L] ; 𝐺[w/L] = 𝐺[w/L] ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } = putμ refl
+  Responseμ record { l≡r = l≡r ; w = w ; w≡R = w≡R ; Γ[w/L] = Γ[w/L] ; Γ[R/L] = Γ[R/L] ; 𝐺[R/L] = 𝐺[R/L] ; 𝐺[w/L] = 𝐺[w/L] ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } =
+    putμ refl
 
   getResponse : Request → Response
   getResponse q =
@@ -1214,7 +1216,7 @@ module Benchmarks where
   foo : FOO
   foo A x y F
       _ _ _ _ _ _ _ _ _ _
-      x≡y = reright-debug-foo-after x≡y {!!}
+      x≡y = reright-debug-reg-after x≡y {!!}
       -- using full Natμ
       -- Typing.CheckRHS
       -- reright-debug-reg-after               11,869ms
