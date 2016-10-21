@@ -13,873 +13,1494 @@ open import Prelude.Equality.Memoized
 open import Prelude.Nat.Memoized
 open import Tactic.Reflection.Equality.Memoized
 
+the-Γ : List (Arg Type)
+the-Γ =
+  arg (arg-info visible relevant)
+  (def (quote _≡_)
+   (arg (arg-info hidden relevant) (def (quote lzero) []) ∷
+    arg (arg-info hidden relevant) (var 13 []) ∷
+    arg (arg-info visible relevant) (var 12 []) ∷
+    arg (arg-info visible relevant) (var 11 []) ∷ []))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 9
+     (arg (arg-info visible relevant) (var 11 []) ∷
+      arg (arg-info visible relevant) (var 10 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 10
+       (arg (arg-info visible relevant) (var 12 []) ∷
+        arg (arg-info visible relevant) (var 11 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 11
+         (arg (arg-info visible relevant) (var 13 []) ∷
+          arg (arg-info visible relevant) (var 12 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 12
+           (arg (arg-info visible relevant) (var 14 []) ∷
+            arg (arg-info visible relevant) (var 13 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 13
+             (arg (arg-info visible relevant) (var 15 []) ∷
+              arg (arg-info visible relevant) (var 14 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 14
+               (arg (arg-info visible relevant) (var 16 []) ∷
+                arg (arg-info visible relevant) (var 15 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 15
+                 (arg (arg-info visible relevant) (var 17 []) ∷
+                  arg (arg-info visible relevant) (var 16 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 16
+                   (arg (arg-info visible relevant) (var 18 []) ∷
+                    arg (arg-info visible relevant) (var 17 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 17
+                     (arg (arg-info visible relevant) (var 19 []) ∷
+                      arg (arg-info visible relevant) (var 18 []) ∷ [])))
+                   (abs "_"
+                    (var 18
+                     (arg (arg-info visible relevant) (var 20 []) ∷
+                      arg (arg-info visible relevant) (var 19 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 8
+     (arg (arg-info visible relevant) (var 10 []) ∷
+      arg (arg-info visible relevant) (var 9 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 9
+       (arg (arg-info visible relevant) (var 11 []) ∷
+        arg (arg-info visible relevant) (var 10 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 10
+         (arg (arg-info visible relevant) (var 12 []) ∷
+          arg (arg-info visible relevant) (var 11 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 11
+           (arg (arg-info visible relevant) (var 13 []) ∷
+            arg (arg-info visible relevant) (var 12 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 12
+             (arg (arg-info visible relevant) (var 14 []) ∷
+              arg (arg-info visible relevant) (var 13 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 13
+               (arg (arg-info visible relevant) (var 15 []) ∷
+                arg (arg-info visible relevant) (var 14 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 14
+                 (arg (arg-info visible relevant) (var 16 []) ∷
+                  arg (arg-info visible relevant) (var 15 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 15
+                   (arg (arg-info visible relevant) (var 17 []) ∷
+                    arg (arg-info visible relevant) (var 16 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 16
+                     (arg (arg-info visible relevant) (var 18 []) ∷
+                      arg (arg-info visible relevant) (var 17 []) ∷ [])))
+                   (abs "_"
+                    (var 17
+                     (arg (arg-info visible relevant) (var 19 []) ∷
+                      arg (arg-info visible relevant) (var 18 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 7
+     (arg (arg-info visible relevant) (var 9 []) ∷
+      arg (arg-info visible relevant) (var 8 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 8
+       (arg (arg-info visible relevant) (var 10 []) ∷
+        arg (arg-info visible relevant) (var 9 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 9
+         (arg (arg-info visible relevant) (var 11 []) ∷
+          arg (arg-info visible relevant) (var 10 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 10
+           (arg (arg-info visible relevant) (var 12 []) ∷
+            arg (arg-info visible relevant) (var 11 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 11
+             (arg (arg-info visible relevant) (var 13 []) ∷
+              arg (arg-info visible relevant) (var 12 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 12
+               (arg (arg-info visible relevant) (var 14 []) ∷
+                arg (arg-info visible relevant) (var 13 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 13
+                 (arg (arg-info visible relevant) (var 15 []) ∷
+                  arg (arg-info visible relevant) (var 14 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 14
+                   (arg (arg-info visible relevant) (var 16 []) ∷
+                    arg (arg-info visible relevant) (var 15 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 15
+                     (arg (arg-info visible relevant) (var 17 []) ∷
+                      arg (arg-info visible relevant) (var 16 []) ∷ [])))
+                   (abs "_"
+                    (var 16
+                     (arg (arg-info visible relevant) (var 18 []) ∷
+                      arg (arg-info visible relevant) (var 17 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 6
+     (arg (arg-info visible relevant) (var 8 []) ∷
+      arg (arg-info visible relevant) (var 7 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 7
+       (arg (arg-info visible relevant) (var 9 []) ∷
+        arg (arg-info visible relevant) (var 8 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 8
+         (arg (arg-info visible relevant) (var 10 []) ∷
+          arg (arg-info visible relevant) (var 9 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 9
+           (arg (arg-info visible relevant) (var 11 []) ∷
+            arg (arg-info visible relevant) (var 10 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 10
+             (arg (arg-info visible relevant) (var 12 []) ∷
+              arg (arg-info visible relevant) (var 11 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 11
+               (arg (arg-info visible relevant) (var 13 []) ∷
+                arg (arg-info visible relevant) (var 12 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 12
+                 (arg (arg-info visible relevant) (var 14 []) ∷
+                  arg (arg-info visible relevant) (var 13 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 13
+                   (arg (arg-info visible relevant) (var 15 []) ∷
+                    arg (arg-info visible relevant) (var 14 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 14
+                     (arg (arg-info visible relevant) (var 16 []) ∷
+                      arg (arg-info visible relevant) (var 15 []) ∷ [])))
+                   (abs "_"
+                    (var 15
+                     (arg (arg-info visible relevant) (var 17 []) ∷
+                      arg (arg-info visible relevant) (var 16 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 5
+     (arg (arg-info visible relevant) (var 7 []) ∷
+      arg (arg-info visible relevant) (var 6 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 6
+       (arg (arg-info visible relevant) (var 8 []) ∷
+        arg (arg-info visible relevant) (var 7 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 7
+         (arg (arg-info visible relevant) (var 9 []) ∷
+          arg (arg-info visible relevant) (var 8 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 8
+           (arg (arg-info visible relevant) (var 10 []) ∷
+            arg (arg-info visible relevant) (var 9 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 9
+             (arg (arg-info visible relevant) (var 11 []) ∷
+              arg (arg-info visible relevant) (var 10 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 10
+               (arg (arg-info visible relevant) (var 12 []) ∷
+                arg (arg-info visible relevant) (var 11 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 11
+                 (arg (arg-info visible relevant) (var 13 []) ∷
+                  arg (arg-info visible relevant) (var 12 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 12
+                   (arg (arg-info visible relevant) (var 14 []) ∷
+                    arg (arg-info visible relevant) (var 13 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 13
+                     (arg (arg-info visible relevant) (var 15 []) ∷
+                      arg (arg-info visible relevant) (var 14 []) ∷ [])))
+                   (abs "_"
+                    (var 14
+                     (arg (arg-info visible relevant) (var 16 []) ∷
+                      arg (arg-info visible relevant) (var 15 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 4
+     (arg (arg-info visible relevant) (var 6 []) ∷
+      arg (arg-info visible relevant) (var 5 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 5
+       (arg (arg-info visible relevant) (var 7 []) ∷
+        arg (arg-info visible relevant) (var 6 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 6
+         (arg (arg-info visible relevant) (var 8 []) ∷
+          arg (arg-info visible relevant) (var 7 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 7
+           (arg (arg-info visible relevant) (var 9 []) ∷
+            arg (arg-info visible relevant) (var 8 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 8
+             (arg (arg-info visible relevant) (var 10 []) ∷
+              arg (arg-info visible relevant) (var 9 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 9
+               (arg (arg-info visible relevant) (var 11 []) ∷
+                arg (arg-info visible relevant) (var 10 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 10
+                 (arg (arg-info visible relevant) (var 12 []) ∷
+                  arg (arg-info visible relevant) (var 11 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 11
+                   (arg (arg-info visible relevant) (var 13 []) ∷
+                    arg (arg-info visible relevant) (var 12 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 12
+                     (arg (arg-info visible relevant) (var 14 []) ∷
+                      arg (arg-info visible relevant) (var 13 []) ∷ [])))
+                   (abs "_"
+                    (var 13
+                     (arg (arg-info visible relevant) (var 15 []) ∷
+                      arg (arg-info visible relevant) (var 14 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 3
+     (arg (arg-info visible relevant) (var 5 []) ∷
+      arg (arg-info visible relevant) (var 4 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 4
+       (arg (arg-info visible relevant) (var 6 []) ∷
+        arg (arg-info visible relevant) (var 5 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 5
+         (arg (arg-info visible relevant) (var 7 []) ∷
+          arg (arg-info visible relevant) (var 6 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 6
+           (arg (arg-info visible relevant) (var 8 []) ∷
+            arg (arg-info visible relevant) (var 7 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 7
+             (arg (arg-info visible relevant) (var 9 []) ∷
+              arg (arg-info visible relevant) (var 8 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 8
+               (arg (arg-info visible relevant) (var 10 []) ∷
+                arg (arg-info visible relevant) (var 9 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 9
+                 (arg (arg-info visible relevant) (var 11 []) ∷
+                  arg (arg-info visible relevant) (var 10 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 10
+                   (arg (arg-info visible relevant) (var 12 []) ∷
+                    arg (arg-info visible relevant) (var 11 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 11
+                     (arg (arg-info visible relevant) (var 13 []) ∷
+                      arg (arg-info visible relevant) (var 12 []) ∷ [])))
+                   (abs "_"
+                    (var 12
+                     (arg (arg-info visible relevant) (var 14 []) ∷
+                      arg (arg-info visible relevant) (var 13 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 2
+     (arg (arg-info visible relevant) (var 4 []) ∷
+      arg (arg-info visible relevant) (var 3 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 3
+       (arg (arg-info visible relevant) (var 5 []) ∷
+        arg (arg-info visible relevant) (var 4 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 4
+         (arg (arg-info visible relevant) (var 6 []) ∷
+          arg (arg-info visible relevant) (var 5 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 5
+           (arg (arg-info visible relevant) (var 7 []) ∷
+            arg (arg-info visible relevant) (var 6 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 6
+             (arg (arg-info visible relevant) (var 8 []) ∷
+              arg (arg-info visible relevant) (var 7 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 7
+               (arg (arg-info visible relevant) (var 9 []) ∷
+                arg (arg-info visible relevant) (var 8 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 8
+                 (arg (arg-info visible relevant) (var 10 []) ∷
+                  arg (arg-info visible relevant) (var 9 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 9
+                   (arg (arg-info visible relevant) (var 11 []) ∷
+                    arg (arg-info visible relevant) (var 10 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 10
+                     (arg (arg-info visible relevant) (var 12 []) ∷
+                      arg (arg-info visible relevant) (var 11 []) ∷ [])))
+                   (abs "_"
+                    (var 11
+                     (arg (arg-info visible relevant) (var 13 []) ∷
+                      arg (arg-info visible relevant) (var 12 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 1
+     (arg (arg-info visible relevant) (var 3 []) ∷
+      arg (arg-info visible relevant) (var 2 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 2
+       (arg (arg-info visible relevant) (var 4 []) ∷
+        arg (arg-info visible relevant) (var 3 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 3
+         (arg (arg-info visible relevant) (var 5 []) ∷
+          arg (arg-info visible relevant) (var 4 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 4
+           (arg (arg-info visible relevant) (var 6 []) ∷
+            arg (arg-info visible relevant) (var 5 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 5
+             (arg (arg-info visible relevant) (var 7 []) ∷
+              arg (arg-info visible relevant) (var 6 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 6
+               (arg (arg-info visible relevant) (var 8 []) ∷
+                arg (arg-info visible relevant) (var 7 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 7
+                 (arg (arg-info visible relevant) (var 9 []) ∷
+                  arg (arg-info visible relevant) (var 8 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 8
+                   (arg (arg-info visible relevant) (var 10 []) ∷
+                    arg (arg-info visible relevant) (var 9 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 9
+                     (arg (arg-info visible relevant) (var 11 []) ∷
+                      arg (arg-info visible relevant) (var 10 []) ∷ [])))
+                   (abs "_"
+                    (var 10
+                     (arg (arg-info visible relevant) (var 12 []) ∷
+                      arg (arg-info visible relevant) (var 11 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi
+   (arg (arg-info visible relevant)
+    (var 0
+     (arg (arg-info visible relevant) (var 2 []) ∷
+      arg (arg-info visible relevant) (var 1 []) ∷ [])))
+   (abs "_"
+    (pi
+     (arg (arg-info visible relevant)
+      (var 1
+       (arg (arg-info visible relevant) (var 3 []) ∷
+        arg (arg-info visible relevant) (var 2 []) ∷ [])))
+     (abs "_"
+      (pi
+       (arg (arg-info visible relevant)
+        (var 2
+         (arg (arg-info visible relevant) (var 4 []) ∷
+          arg (arg-info visible relevant) (var 3 []) ∷ [])))
+       (abs "_"
+        (pi
+         (arg (arg-info visible relevant)
+          (var 3
+           (arg (arg-info visible relevant) (var 5 []) ∷
+            arg (arg-info visible relevant) (var 4 []) ∷ [])))
+         (abs "_"
+          (pi
+           (arg (arg-info visible relevant)
+            (var 4
+             (arg (arg-info visible relevant) (var 6 []) ∷
+              arg (arg-info visible relevant) (var 5 []) ∷ [])))
+           (abs "_"
+            (pi
+             (arg (arg-info visible relevant)
+              (var 5
+               (arg (arg-info visible relevant) (var 7 []) ∷
+                arg (arg-info visible relevant) (var 6 []) ∷ [])))
+             (abs "_"
+              (pi
+               (arg (arg-info visible relevant)
+                (var 6
+                 (arg (arg-info visible relevant) (var 8 []) ∷
+                  arg (arg-info visible relevant) (var 7 []) ∷ [])))
+               (abs "_"
+                (pi
+                 (arg (arg-info visible relevant)
+                  (var 7
+                   (arg (arg-info visible relevant) (var 9 []) ∷
+                    arg (arg-info visible relevant) (var 8 []) ∷ [])))
+                 (abs "_"
+                  (pi
+                   (arg (arg-info visible relevant)
+                    (var 8
+                     (arg (arg-info visible relevant) (var 10 []) ∷
+                      arg (arg-info visible relevant) (var 9 []) ∷ [])))
+                   (abs "_"
+                    (var 9
+                     (arg (arg-info visible relevant) (var 11 []) ∷
+                      arg (arg-info visible relevant) (var 10 []) ∷
+                      []))))))))))))))))))))
+  ∷
+  arg (arg-info visible relevant)
+  (pi (arg (arg-info visible relevant) (var 2 []))
+   (abs "_"
+    (pi (arg (arg-info visible relevant) (var 3 []))
+     (abs "_" (agda-sort (lit 0))))))
+  ∷
+  arg (arg-info visible relevant) (var 1 []) ∷
+  arg (arg-info visible relevant) (var 0 []) ∷
+  arg (arg-info visible relevant) (agda-sort (lit 0)) ∷ []
+
 test-foo : List (Arg Term × Nat)
 test-foo =
+  (arg (arg-info visible relevant) (agda-sort (lit 0)) , 0) ∷
+  (arg (arg-info visible relevant) (var 3 []) , 0) ∷
+  (arg (arg-info visible relevant) (var 4 []) , 0) ∷
   (arg (arg-info visible relevant)
-   (pi
-    (arg (arg-info visible relevant)
-     (var 22
-      (arg (arg-info visible relevant) (var 10 []) ∷
-       arg (arg-info visible relevant) (var 23 []) ∷ [])))
+   (pi (arg (arg-info visible relevant) (var 5 []))
     (abs "_"
-     (pi
-      (arg (arg-info visible relevant)
-       (var 23
-        (arg (arg-info visible relevant) (var 11 []) ∷
-         arg (arg-info visible relevant) (var 24 []) ∷ [])))
-      (abs "_"
-       (pi
-        (arg (arg-info visible relevant)
-         (var 24
-          (arg (arg-info visible relevant) (var 12 []) ∷
-           arg (arg-info visible relevant) (var 25 []) ∷ [])))
-        (abs "_"
-         (pi
-          (arg (arg-info visible relevant)
-           (var 25
-            (arg (arg-info visible relevant) (var 13 []) ∷
-             arg (arg-info visible relevant) (var 26 []) ∷ [])))
-          (abs "_"
-           (pi
-            (arg (arg-info visible relevant)
-             (var 26
-              (arg (arg-info visible relevant) (var 14 []) ∷
-               arg (arg-info visible relevant) (var 27 []) ∷ [])))
-            (abs "_"
-             (pi
-              (arg (arg-info visible relevant)
-               (var 27
-                (arg (arg-info visible relevant) (var 15 []) ∷
-                 arg (arg-info visible relevant) (var 28 []) ∷ [])))
-              (abs "_"
-               (pi
-                (arg (arg-info visible relevant)
-                 (var 28
-                  (arg (arg-info visible relevant) (var 16 []) ∷
-                   arg (arg-info visible relevant) (var 29 []) ∷ [])))
-                (abs "_"
-                 (pi
-                  (arg (arg-info visible relevant)
-                   (var 29
-                    (arg (arg-info visible relevant) (var 17 []) ∷
-                     arg (arg-info visible relevant) (var 30 []) ∷ [])))
-                  (abs "_"
-                   (pi
-                    (arg (arg-info visible relevant)
-                     (var 30
-                      (arg (arg-info visible relevant) (var 18 []) ∷
-                       arg (arg-info visible relevant) (var 31 []) ∷ [])))
-                    (abs "_"
-                     (var 31
-                      (arg (arg-info visible relevant) (var 19 []) ∷
-                       arg (arg-info visible relevant) (var 32 []) ∷
-                       []))))))))))))))))))))
-   , 13)
+     (pi (arg (arg-info visible relevant) (var 6 []))
+      (abs "_" (agda-sort (lit 0))))))
+   , 0)
   ∷
   (arg (arg-info visible relevant)
    (pi
     (arg (arg-info visible relevant)
-     (var 21
-      (arg (arg-info visible relevant) (var 9 []) ∷
-       arg (arg-info visible relevant) (var 22 []) ∷ [])))
-    (abs "_"
-     (pi
-      (arg (arg-info visible relevant)
-       (var 22
-        (arg (arg-info visible relevant) (var 10 []) ∷
-         arg (arg-info visible relevant) (var 23 []) ∷ [])))
-      (abs "_"
-       (pi
-        (arg (arg-info visible relevant)
-         (var 23
-          (arg (arg-info visible relevant) (var 11 []) ∷
-           arg (arg-info visible relevant) (var 24 []) ∷ [])))
-        (abs "_"
-         (pi
-          (arg (arg-info visible relevant)
-           (var 24
-            (arg (arg-info visible relevant) (var 12 []) ∷
-             arg (arg-info visible relevant) (var 25 []) ∷ [])))
-          (abs "_"
-           (pi
-            (arg (arg-info visible relevant)
-             (var 25
-              (arg (arg-info visible relevant) (var 13 []) ∷
-               arg (arg-info visible relevant) (var 26 []) ∷ [])))
-            (abs "_"
-             (pi
-              (arg (arg-info visible relevant)
-               (var 26
-                (arg (arg-info visible relevant) (var 14 []) ∷
-                 arg (arg-info visible relevant) (var 27 []) ∷ [])))
-              (abs "_"
-               (pi
-                (arg (arg-info visible relevant)
-                 (var 27
-                  (arg (arg-info visible relevant) (var 15 []) ∷
-                   arg (arg-info visible relevant) (var 28 []) ∷ [])))
-                (abs "_"
-                 (pi
-                  (arg (arg-info visible relevant)
-                   (var 28
-                    (arg (arg-info visible relevant) (var 16 []) ∷
-                     arg (arg-info visible relevant) (var 29 []) ∷ [])))
-                  (abs "_"
-                   (pi
-                    (arg (arg-info visible relevant)
-                     (var 29
-                      (arg (arg-info visible relevant) (var 17 []) ∷
-                       arg (arg-info visible relevant) (var 30 []) ∷ [])))
-                    (abs "_"
-                     (var 30
-                      (arg (arg-info visible relevant) (var 18 []) ∷
-                       arg (arg-info visible relevant) (var 31 []) ∷
-                       []))))))))))))))))))))
-   , 12)
-  ∷
-  (arg (arg-info visible relevant)
-   (pi
-    (arg (arg-info visible relevant)
-     (var 20
-      (arg (arg-info visible relevant) (var 8 []) ∷
-       arg (arg-info visible relevant) (var 21 []) ∷ [])))
-    (abs "_"
-     (pi
-      (arg (arg-info visible relevant)
-       (var 21
-        (arg (arg-info visible relevant) (var 9 []) ∷
-         arg (arg-info visible relevant) (var 22 []) ∷ [])))
-      (abs "_"
-       (pi
-        (arg (arg-info visible relevant)
-         (var 22
-          (arg (arg-info visible relevant) (var 10 []) ∷
-           arg (arg-info visible relevant) (var 23 []) ∷ [])))
-        (abs "_"
-         (pi
-          (arg (arg-info visible relevant)
-           (var 23
-            (arg (arg-info visible relevant) (var 11 []) ∷
-             arg (arg-info visible relevant) (var 24 []) ∷ [])))
-          (abs "_"
-           (pi
-            (arg (arg-info visible relevant)
-             (var 24
-              (arg (arg-info visible relevant) (var 12 []) ∷
-               arg (arg-info visible relevant) (var 25 []) ∷ [])))
-            (abs "_"
-             (pi
-              (arg (arg-info visible relevant)
-               (var 25
-                (arg (arg-info visible relevant) (var 13 []) ∷
-                 arg (arg-info visible relevant) (var 26 []) ∷ [])))
-              (abs "_"
-               (pi
-                (arg (arg-info visible relevant)
-                 (var 26
-                  (arg (arg-info visible relevant) (var 14 []) ∷
-                   arg (arg-info visible relevant) (var 27 []) ∷ [])))
-                (abs "_"
-                 (pi
-                  (arg (arg-info visible relevant)
-                   (var 27
-                    (arg (arg-info visible relevant) (var 15 []) ∷
-                     arg (arg-info visible relevant) (var 28 []) ∷ [])))
-                  (abs "_"
-                   (pi
-                    (arg (arg-info visible relevant)
-                     (var 28
-                      (arg (arg-info visible relevant) (var 16 []) ∷
-                       arg (arg-info visible relevant) (var 29 []) ∷ [])))
-                    (abs "_"
-                     (var 29
-                      (arg (arg-info visible relevant) (var 17 []) ∷
-                       arg (arg-info visible relevant) (var 30 []) ∷
-                       []))))))))))))))))))))
-   , 11)
-  ∷
-  (arg (arg-info visible relevant)
-   (pi
-    (arg (arg-info visible relevant)
-     (var 19
-      (arg (arg-info visible relevant) (var 7 []) ∷
-       arg (arg-info visible relevant) (var 20 []) ∷ [])))
-    (abs "_"
-     (pi
-      (arg (arg-info visible relevant)
-       (var 20
-        (arg (arg-info visible relevant) (var 8 []) ∷
-         arg (arg-info visible relevant) (var 21 []) ∷ [])))
-      (abs "_"
-       (pi
-        (arg (arg-info visible relevant)
-         (var 21
-          (arg (arg-info visible relevant) (var 9 []) ∷
-           arg (arg-info visible relevant) (var 22 []) ∷ [])))
-        (abs "_"
-         (pi
-          (arg (arg-info visible relevant)
-           (var 22
-            (arg (arg-info visible relevant) (var 10 []) ∷
-             arg (arg-info visible relevant) (var 23 []) ∷ [])))
-          (abs "_"
-           (pi
-            (arg (arg-info visible relevant)
-             (var 23
-              (arg (arg-info visible relevant) (var 11 []) ∷
-               arg (arg-info visible relevant) (var 24 []) ∷ [])))
-            (abs "_"
-             (pi
-              (arg (arg-info visible relevant)
-               (var 24
-                (arg (arg-info visible relevant) (var 12 []) ∷
-                 arg (arg-info visible relevant) (var 25 []) ∷ [])))
-              (abs "_"
-               (pi
-                (arg (arg-info visible relevant)
-                 (var 25
-                  (arg (arg-info visible relevant) (var 13 []) ∷
-                   arg (arg-info visible relevant) (var 26 []) ∷ [])))
-                (abs "_"
-                 (pi
-                  (arg (arg-info visible relevant)
-                   (var 26
-                    (arg (arg-info visible relevant) (var 14 []) ∷
-                     arg (arg-info visible relevant) (var 27 []) ∷ [])))
-                  (abs "_"
-                   (pi
-                    (arg (arg-info visible relevant)
-                     (var 27
-                      (arg (arg-info visible relevant) (var 15 []) ∷
-                       arg (arg-info visible relevant) (var 28 []) ∷ [])))
-                    (abs "_"
-                     (var 28
-                      (arg (arg-info visible relevant) (var 16 []) ∷
-                       arg (arg-info visible relevant) (var 29 []) ∷
-                       []))))))))))))))))))))
-   , 10)
-  ∷
-  (arg (arg-info visible relevant)
-   (pi
-    (arg (arg-info visible relevant)
-     (var 18
-      (arg (arg-info visible relevant) (var 6 []) ∷
-       arg (arg-info visible relevant) (var 19 []) ∷ [])))
-    (abs "_"
-     (pi
-      (arg (arg-info visible relevant)
-       (var 19
-        (arg (arg-info visible relevant) (var 7 []) ∷
-         arg (arg-info visible relevant) (var 20 []) ∷ [])))
-      (abs "_"
-       (pi
-        (arg (arg-info visible relevant)
-         (var 20
-          (arg (arg-info visible relevant) (var 8 []) ∷
-           arg (arg-info visible relevant) (var 21 []) ∷ [])))
-        (abs "_"
-         (pi
-          (arg (arg-info visible relevant)
-           (var 21
-            (arg (arg-info visible relevant) (var 9 []) ∷
-             arg (arg-info visible relevant) (var 22 []) ∷ [])))
-          (abs "_"
-           (pi
-            (arg (arg-info visible relevant)
-             (var 22
-              (arg (arg-info visible relevant) (var 10 []) ∷
-               arg (arg-info visible relevant) (var 23 []) ∷ [])))
-            (abs "_"
-             (pi
-              (arg (arg-info visible relevant)
-               (var 23
-                (arg (arg-info visible relevant) (var 11 []) ∷
-                 arg (arg-info visible relevant) (var 24 []) ∷ [])))
-              (abs "_"
-               (pi
-                (arg (arg-info visible relevant)
-                 (var 24
-                  (arg (arg-info visible relevant) (var 12 []) ∷
-                   arg (arg-info visible relevant) (var 25 []) ∷ [])))
-                (abs "_"
-                 (pi
-                  (arg (arg-info visible relevant)
-                   (var 25
-                    (arg (arg-info visible relevant) (var 13 []) ∷
-                     arg (arg-info visible relevant) (var 26 []) ∷ [])))
-                  (abs "_"
-                   (pi
-                    (arg (arg-info visible relevant)
-                     (var 26
-                      (arg (arg-info visible relevant) (var 14 []) ∷
-                       arg (arg-info visible relevant) (var 27 []) ∷ [])))
-                    (abs "_"
-                     (var 27
-                      (arg (arg-info visible relevant) (var 15 []) ∷
-                       arg (arg-info visible relevant) (var 28 []) ∷
-                       []))))))))))))))))))))
-   , 9)
-  ∷
-  (arg (arg-info visible relevant)
-   (pi
-    (arg (arg-info visible relevant)
-     (var 17
+     (var 3
       (arg (arg-info visible relevant) (var 5 []) ∷
-       arg (arg-info visible relevant) (var 18 []) ∷ [])))
+       arg (arg-info visible relevant) (var 4 []) ∷ [])))
     (abs "_"
      (pi
       (arg (arg-info visible relevant)
-       (var 18
+       (var 4
         (arg (arg-info visible relevant) (var 6 []) ∷
-         arg (arg-info visible relevant) (var 19 []) ∷ [])))
+         arg (arg-info visible relevant) (var 5 []) ∷ [])))
       (abs "_"
        (pi
         (arg (arg-info visible relevant)
-         (var 19
+         (var 5
           (arg (arg-info visible relevant) (var 7 []) ∷
-           arg (arg-info visible relevant) (var 20 []) ∷ [])))
+           arg (arg-info visible relevant) (var 6 []) ∷ [])))
         (abs "_"
          (pi
           (arg (arg-info visible relevant)
-           (var 20
+           (var 6
             (arg (arg-info visible relevant) (var 8 []) ∷
-             arg (arg-info visible relevant) (var 21 []) ∷ [])))
+             arg (arg-info visible relevant) (var 7 []) ∷ [])))
           (abs "_"
            (pi
             (arg (arg-info visible relevant)
-             (var 21
+             (var 7
               (arg (arg-info visible relevant) (var 9 []) ∷
-               arg (arg-info visible relevant) (var 22 []) ∷ [])))
+               arg (arg-info visible relevant) (var 8 []) ∷ [])))
             (abs "_"
              (pi
               (arg (arg-info visible relevant)
-               (var 22
+               (var 8
                 (arg (arg-info visible relevant) (var 10 []) ∷
-                 arg (arg-info visible relevant) (var 23 []) ∷ [])))
+                 arg (arg-info visible relevant) (var 9 []) ∷ [])))
               (abs "_"
                (pi
                 (arg (arg-info visible relevant)
-                 (var 23
+                 (var 9
                   (arg (arg-info visible relevant) (var 11 []) ∷
-                   arg (arg-info visible relevant) (var 24 []) ∷ [])))
+                   arg (arg-info visible relevant) (var 10 []) ∷ [])))
                 (abs "_"
                  (pi
                   (arg (arg-info visible relevant)
-                   (var 24
+                   (var 10
                     (arg (arg-info visible relevant) (var 12 []) ∷
-                     arg (arg-info visible relevant) (var 25 []) ∷ [])))
+                     arg (arg-info visible relevant) (var 11 []) ∷ [])))
                   (abs "_"
                    (pi
                     (arg (arg-info visible relevant)
-                     (var 25
+                     (var 11
                       (arg (arg-info visible relevant) (var 13 []) ∷
-                       arg (arg-info visible relevant) (var 26 []) ∷ [])))
+                       arg (arg-info visible relevant) (var 12 []) ∷ [])))
                     (abs "_"
-                     (var 26
+                     (var 12
                       (arg (arg-info visible relevant) (var 14 []) ∷
-                       arg (arg-info visible relevant) (var 27 []) ∷
+                       arg (arg-info visible relevant) (var 13 []) ∷
                        []))))))))))))))))))))
-   , 8)
+   , 0)
   ∷
   (arg (arg-info visible relevant)
    (pi
     (arg (arg-info visible relevant)
-     (var 16
-      (arg (arg-info visible relevant) (var 4 []) ∷
-       arg (arg-info visible relevant) (var 17 []) ∷ [])))
+     (var 4
+      (arg (arg-info visible relevant) (var 6 []) ∷
+       arg (arg-info visible relevant) (var 5 []) ∷ [])))
     (abs "_"
      (pi
       (arg (arg-info visible relevant)
-       (var 17
-        (arg (arg-info visible relevant) (var 5 []) ∷
-         arg (arg-info visible relevant) (var 18 []) ∷ [])))
+       (var 5
+        (arg (arg-info visible relevant) (var 7 []) ∷
+         arg (arg-info visible relevant) (var 6 []) ∷ [])))
       (abs "_"
        (pi
         (arg (arg-info visible relevant)
-         (var 18
-          (arg (arg-info visible relevant) (var 6 []) ∷
-           arg (arg-info visible relevant) (var 19 []) ∷ [])))
+         (var 6
+          (arg (arg-info visible relevant) (var 8 []) ∷
+           arg (arg-info visible relevant) (var 7 []) ∷ [])))
         (abs "_"
          (pi
           (arg (arg-info visible relevant)
-           (var 19
-            (arg (arg-info visible relevant) (var 7 []) ∷
-             arg (arg-info visible relevant) (var 20 []) ∷ [])))
+           (var 7
+            (arg (arg-info visible relevant) (var 9 []) ∷
+             arg (arg-info visible relevant) (var 8 []) ∷ [])))
           (abs "_"
            (pi
             (arg (arg-info visible relevant)
-             (var 20
-              (arg (arg-info visible relevant) (var 8 []) ∷
-               arg (arg-info visible relevant) (var 21 []) ∷ [])))
+             (var 8
+              (arg (arg-info visible relevant) (var 10 []) ∷
+               arg (arg-info visible relevant) (var 9 []) ∷ [])))
             (abs "_"
              (pi
               (arg (arg-info visible relevant)
-               (var 21
-                (arg (arg-info visible relevant) (var 9 []) ∷
-                 arg (arg-info visible relevant) (var 22 []) ∷ [])))
+               (var 9
+                (arg (arg-info visible relevant) (var 11 []) ∷
+                 arg (arg-info visible relevant) (var 10 []) ∷ [])))
               (abs "_"
                (pi
                 (arg (arg-info visible relevant)
-                 (var 22
-                  (arg (arg-info visible relevant) (var 10 []) ∷
-                   arg (arg-info visible relevant) (var 23 []) ∷ [])))
+                 (var 10
+                  (arg (arg-info visible relevant) (var 12 []) ∷
+                   arg (arg-info visible relevant) (var 11 []) ∷ [])))
                 (abs "_"
                  (pi
                   (arg (arg-info visible relevant)
-                   (var 23
-                    (arg (arg-info visible relevant) (var 11 []) ∷
-                     arg (arg-info visible relevant) (var 24 []) ∷ [])))
+                   (var 11
+                    (arg (arg-info visible relevant) (var 13 []) ∷
+                     arg (arg-info visible relevant) (var 12 []) ∷ [])))
                   (abs "_"
                    (pi
                     (arg (arg-info visible relevant)
-                     (var 24
-                      (arg (arg-info visible relevant) (var 12 []) ∷
-                       arg (arg-info visible relevant) (var 25 []) ∷ [])))
+                     (var 12
+                      (arg (arg-info visible relevant) (var 14 []) ∷
+                       arg (arg-info visible relevant) (var 13 []) ∷ [])))
                     (abs "_"
-                     (var 25
-                      (arg (arg-info visible relevant) (var 13 []) ∷
-                       arg (arg-info visible relevant) (var 26 []) ∷
+                     (var 13
+                      (arg (arg-info visible relevant) (var 15 []) ∷
+                       arg (arg-info visible relevant) (var 14 []) ∷
                        []))))))))))))))))))))
-   , 7)
+   , 0)
   ∷
   (arg (arg-info visible relevant)
    (pi
     (arg (arg-info visible relevant)
-     (var 15
-      (arg (arg-info visible relevant) (var 3 []) ∷
-       arg (arg-info visible relevant) (var 16 []) ∷ [])))
+     (var 5
+      (arg (arg-info visible relevant) (var 7 []) ∷
+       arg (arg-info visible relevant) (var 6 []) ∷ [])))
     (abs "_"
      (pi
       (arg (arg-info visible relevant)
-       (var 16
-        (arg (arg-info visible relevant) (var 4 []) ∷
-         arg (arg-info visible relevant) (var 17 []) ∷ [])))
+       (var 6
+        (arg (arg-info visible relevant) (var 8 []) ∷
+         arg (arg-info visible relevant) (var 7 []) ∷ [])))
       (abs "_"
        (pi
         (arg (arg-info visible relevant)
-         (var 17
-          (arg (arg-info visible relevant) (var 5 []) ∷
-           arg (arg-info visible relevant) (var 18 []) ∷ [])))
+         (var 7
+          (arg (arg-info visible relevant) (var 9 []) ∷
+           arg (arg-info visible relevant) (var 8 []) ∷ [])))
         (abs "_"
          (pi
           (arg (arg-info visible relevant)
-           (var 18
-            (arg (arg-info visible relevant) (var 6 []) ∷
-             arg (arg-info visible relevant) (var 19 []) ∷ [])))
+           (var 8
+            (arg (arg-info visible relevant) (var 10 []) ∷
+             arg (arg-info visible relevant) (var 9 []) ∷ [])))
           (abs "_"
            (pi
             (arg (arg-info visible relevant)
-             (var 19
-              (arg (arg-info visible relevant) (var 7 []) ∷
-               arg (arg-info visible relevant) (var 20 []) ∷ [])))
+             (var 9
+              (arg (arg-info visible relevant) (var 11 []) ∷
+               arg (arg-info visible relevant) (var 10 []) ∷ [])))
             (abs "_"
              (pi
               (arg (arg-info visible relevant)
-               (var 20
-                (arg (arg-info visible relevant) (var 8 []) ∷
-                 arg (arg-info visible relevant) (var 21 []) ∷ [])))
+               (var 10
+                (arg (arg-info visible relevant) (var 12 []) ∷
+                 arg (arg-info visible relevant) (var 11 []) ∷ [])))
               (abs "_"
                (pi
                 (arg (arg-info visible relevant)
-                 (var 21
-                  (arg (arg-info visible relevant) (var 9 []) ∷
-                   arg (arg-info visible relevant) (var 22 []) ∷ [])))
+                 (var 11
+                  (arg (arg-info visible relevant) (var 13 []) ∷
+                   arg (arg-info visible relevant) (var 12 []) ∷ [])))
                 (abs "_"
                  (pi
                   (arg (arg-info visible relevant)
-                   (var 22
-                    (arg (arg-info visible relevant) (var 10 []) ∷
-                     arg (arg-info visible relevant) (var 23 []) ∷ [])))
+                   (var 12
+                    (arg (arg-info visible relevant) (var 14 []) ∷
+                     arg (arg-info visible relevant) (var 13 []) ∷ [])))
                   (abs "_"
                    (pi
                     (arg (arg-info visible relevant)
-                     (var 23
-                      (arg (arg-info visible relevant) (var 11 []) ∷
-                       arg (arg-info visible relevant) (var 24 []) ∷ [])))
+                     (var 13
+                      (arg (arg-info visible relevant) (var 15 []) ∷
+                       arg (arg-info visible relevant) (var 14 []) ∷ [])))
                     (abs "_"
-                     (var 24
-                      (arg (arg-info visible relevant) (var 12 []) ∷
-                       arg (arg-info visible relevant) (var 25 []) ∷
+                     (var 14
+                      (arg (arg-info visible relevant) (var 16 []) ∷
+                       arg (arg-info visible relevant) (var 15 []) ∷
                        []))))))))))))))))))))
-   , 6)
+   , 0)
   ∷
   (arg (arg-info visible relevant)
    (pi
     (arg (arg-info visible relevant)
-     (var 14
-      (arg (arg-info visible relevant) (var 2 []) ∷
-       arg (arg-info visible relevant) (var 15 []) ∷ [])))
+     (var 6
+      (arg (arg-info visible relevant) (var 8 []) ∷
+       arg (arg-info visible relevant) (var 7 []) ∷ [])))
     (abs "_"
      (pi
       (arg (arg-info visible relevant)
-       (var 15
-        (arg (arg-info visible relevant) (var 3 []) ∷
-         arg (arg-info visible relevant) (var 16 []) ∷ [])))
+       (var 7
+        (arg (arg-info visible relevant) (var 9 []) ∷
+         arg (arg-info visible relevant) (var 8 []) ∷ [])))
       (abs "_"
        (pi
         (arg (arg-info visible relevant)
-         (var 16
-          (arg (arg-info visible relevant) (var 4 []) ∷
-           arg (arg-info visible relevant) (var 17 []) ∷ [])))
+         (var 8
+          (arg (arg-info visible relevant) (var 10 []) ∷
+           arg (arg-info visible relevant) (var 9 []) ∷ [])))
         (abs "_"
          (pi
           (arg (arg-info visible relevant)
-           (var 17
-            (arg (arg-info visible relevant) (var 5 []) ∷
-             arg (arg-info visible relevant) (var 18 []) ∷ [])))
+           (var 9
+            (arg (arg-info visible relevant) (var 11 []) ∷
+             arg (arg-info visible relevant) (var 10 []) ∷ [])))
           (abs "_"
            (pi
             (arg (arg-info visible relevant)
-             (var 18
-              (arg (arg-info visible relevant) (var 6 []) ∷
-               arg (arg-info visible relevant) (var 19 []) ∷ [])))
+             (var 10
+              (arg (arg-info visible relevant) (var 12 []) ∷
+               arg (arg-info visible relevant) (var 11 []) ∷ [])))
             (abs "_"
              (pi
               (arg (arg-info visible relevant)
-               (var 19
-                (arg (arg-info visible relevant) (var 7 []) ∷
-                 arg (arg-info visible relevant) (var 20 []) ∷ [])))
+               (var 11
+                (arg (arg-info visible relevant) (var 13 []) ∷
+                 arg (arg-info visible relevant) (var 12 []) ∷ [])))
               (abs "_"
                (pi
                 (arg (arg-info visible relevant)
-                 (var 20
-                  (arg (arg-info visible relevant) (var 8 []) ∷
-                   arg (arg-info visible relevant) (var 21 []) ∷ [])))
+                 (var 12
+                  (arg (arg-info visible relevant) (var 14 []) ∷
+                   arg (arg-info visible relevant) (var 13 []) ∷ [])))
                 (abs "_"
                  (pi
                   (arg (arg-info visible relevant)
-                   (var 21
-                    (arg (arg-info visible relevant) (var 9 []) ∷
-                     arg (arg-info visible relevant) (var 22 []) ∷ [])))
+                   (var 13
+                    (arg (arg-info visible relevant) (var 15 []) ∷
+                     arg (arg-info visible relevant) (var 14 []) ∷ [])))
                   (abs "_"
                    (pi
                     (arg (arg-info visible relevant)
-                     (var 22
-                      (arg (arg-info visible relevant) (var 10 []) ∷
-                       arg (arg-info visible relevant) (var 23 []) ∷ [])))
+                     (var 14
+                      (arg (arg-info visible relevant) (var 16 []) ∷
+                       arg (arg-info visible relevant) (var 15 []) ∷ [])))
                     (abs "_"
-                     (var 23
-                      (arg (arg-info visible relevant) (var 11 []) ∷
-                       arg (arg-info visible relevant) (var 24 []) ∷
+                     (var 15
+                      (arg (arg-info visible relevant) (var 17 []) ∷
+                       arg (arg-info visible relevant) (var 16 []) ∷
                        []))))))))))))))))))))
-   , 5)
+   , 0)
   ∷
   (arg (arg-info visible relevant)
    (pi
     (arg (arg-info visible relevant)
-     (var 13
-      (arg (arg-info visible relevant) (var 1 []) ∷
-       arg (arg-info visible relevant) (var 14 []) ∷ [])))
+     (var 7
+      (arg (arg-info visible relevant) (var 9 []) ∷
+       arg (arg-info visible relevant) (var 8 []) ∷ [])))
     (abs "_"
      (pi
       (arg (arg-info visible relevant)
-       (var 14
-        (arg (arg-info visible relevant) (var 2 []) ∷
-         arg (arg-info visible relevant) (var 15 []) ∷ [])))
+       (var 8
+        (arg (arg-info visible relevant) (var 10 []) ∷
+         arg (arg-info visible relevant) (var 9 []) ∷ [])))
       (abs "_"
        (pi
         (arg (arg-info visible relevant)
-         (var 15
-          (arg (arg-info visible relevant) (var 3 []) ∷
-           arg (arg-info visible relevant) (var 16 []) ∷ [])))
+         (var 9
+          (arg (arg-info visible relevant) (var 11 []) ∷
+           arg (arg-info visible relevant) (var 10 []) ∷ [])))
         (abs "_"
          (pi
           (arg (arg-info visible relevant)
-           (var 16
-            (arg (arg-info visible relevant) (var 4 []) ∷
-             arg (arg-info visible relevant) (var 17 []) ∷ [])))
+           (var 10
+            (arg (arg-info visible relevant) (var 12 []) ∷
+             arg (arg-info visible relevant) (var 11 []) ∷ [])))
           (abs "_"
            (pi
             (arg (arg-info visible relevant)
-             (var 17
-              (arg (arg-info visible relevant) (var 5 []) ∷
-               arg (arg-info visible relevant) (var 18 []) ∷ [])))
+             (var 11
+              (arg (arg-info visible relevant) (var 13 []) ∷
+               arg (arg-info visible relevant) (var 12 []) ∷ [])))
             (abs "_"
              (pi
               (arg (arg-info visible relevant)
-               (var 18
-                (arg (arg-info visible relevant) (var 6 []) ∷
-                 arg (arg-info visible relevant) (var 19 []) ∷ [])))
+               (var 12
+                (arg (arg-info visible relevant) (var 14 []) ∷
+                 arg (arg-info visible relevant) (var 13 []) ∷ [])))
               (abs "_"
                (pi
                 (arg (arg-info visible relevant)
-                 (var 19
-                  (arg (arg-info visible relevant) (var 7 []) ∷
-                   arg (arg-info visible relevant) (var 20 []) ∷ [])))
+                 (var 13
+                  (arg (arg-info visible relevant) (var 15 []) ∷
+                   arg (arg-info visible relevant) (var 14 []) ∷ [])))
                 (abs "_"
                  (pi
                   (arg (arg-info visible relevant)
-                   (var 20
-                    (arg (arg-info visible relevant) (var 8 []) ∷
-                     arg (arg-info visible relevant) (var 21 []) ∷ [])))
+                   (var 14
+                    (arg (arg-info visible relevant) (var 16 []) ∷
+                     arg (arg-info visible relevant) (var 15 []) ∷ [])))
                   (abs "_"
                    (pi
                     (arg (arg-info visible relevant)
+                     (var 15
+                      (arg (arg-info visible relevant) (var 17 []) ∷
+                       arg (arg-info visible relevant) (var 16 []) ∷ [])))
+                    (abs "_"
+                     (var 16
+                      (arg (arg-info visible relevant) (var 18 []) ∷
+                       arg (arg-info visible relevant) (var 17 []) ∷
+                       []))))))))))))))))))))
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (pi
+    (arg (arg-info visible relevant)
+     (var 8
+      (arg (arg-info visible relevant) (var 10 []) ∷
+       arg (arg-info visible relevant) (var 9 []) ∷ [])))
+    (abs "_"
+     (pi
+      (arg (arg-info visible relevant)
+       (var 9
+        (arg (arg-info visible relevant) (var 11 []) ∷
+         arg (arg-info visible relevant) (var 10 []) ∷ [])))
+      (abs "_"
+       (pi
+        (arg (arg-info visible relevant)
+         (var 10
+          (arg (arg-info visible relevant) (var 12 []) ∷
+           arg (arg-info visible relevant) (var 11 []) ∷ [])))
+        (abs "_"
+         (pi
+          (arg (arg-info visible relevant)
+           (var 11
+            (arg (arg-info visible relevant) (var 13 []) ∷
+             arg (arg-info visible relevant) (var 12 []) ∷ [])))
+          (abs "_"
+           (pi
+            (arg (arg-info visible relevant)
+             (var 12
+              (arg (arg-info visible relevant) (var 14 []) ∷
+               arg (arg-info visible relevant) (var 13 []) ∷ [])))
+            (abs "_"
+             (pi
+              (arg (arg-info visible relevant)
+               (var 13
+                (arg (arg-info visible relevant) (var 15 []) ∷
+                 arg (arg-info visible relevant) (var 14 []) ∷ [])))
+              (abs "_"
+               (pi
+                (arg (arg-info visible relevant)
+                 (var 14
+                  (arg (arg-info visible relevant) (var 16 []) ∷
+                   arg (arg-info visible relevant) (var 15 []) ∷ [])))
+                (abs "_"
+                 (pi
+                  (arg (arg-info visible relevant)
+                   (var 15
+                    (arg (arg-info visible relevant) (var 17 []) ∷
+                     arg (arg-info visible relevant) (var 16 []) ∷ [])))
+                  (abs "_"
+                   (pi
+                    (arg (arg-info visible relevant)
+                     (var 16
+                      (arg (arg-info visible relevant) (var 18 []) ∷
+                       arg (arg-info visible relevant) (var 17 []) ∷ [])))
+                    (abs "_"
+                     (var 17
+                      (arg (arg-info visible relevant) (var 19 []) ∷
+                       arg (arg-info visible relevant) (var 18 []) ∷
+                       []))))))))))))))))))))
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (pi
+    (arg (arg-info visible relevant)
+     (var 9
+      (arg (arg-info visible relevant) (var 11 []) ∷
+       arg (arg-info visible relevant) (var 10 []) ∷ [])))
+    (abs "_"
+     (pi
+      (arg (arg-info visible relevant)
+       (var 10
+        (arg (arg-info visible relevant) (var 12 []) ∷
+         arg (arg-info visible relevant) (var 11 []) ∷ [])))
+      (abs "_"
+       (pi
+        (arg (arg-info visible relevant)
+         (var 11
+          (arg (arg-info visible relevant) (var 13 []) ∷
+           arg (arg-info visible relevant) (var 12 []) ∷ [])))
+        (abs "_"
+         (pi
+          (arg (arg-info visible relevant)
+           (var 12
+            (arg (arg-info visible relevant) (var 14 []) ∷
+             arg (arg-info visible relevant) (var 13 []) ∷ [])))
+          (abs "_"
+           (pi
+            (arg (arg-info visible relevant)
+             (var 13
+              (arg (arg-info visible relevant) (var 15 []) ∷
+               arg (arg-info visible relevant) (var 14 []) ∷ [])))
+            (abs "_"
+             (pi
+              (arg (arg-info visible relevant)
+               (var 14
+                (arg (arg-info visible relevant) (var 16 []) ∷
+                 arg (arg-info visible relevant) (var 15 []) ∷ [])))
+              (abs "_"
+               (pi
+                (arg (arg-info visible relevant)
+                 (var 15
+                  (arg (arg-info visible relevant) (var 17 []) ∷
+                   arg (arg-info visible relevant) (var 16 []) ∷ [])))
+                (abs "_"
+                 (pi
+                  (arg (arg-info visible relevant)
+                   (var 16
+                    (arg (arg-info visible relevant) (var 18 []) ∷
+                     arg (arg-info visible relevant) (var 17 []) ∷ [])))
+                  (abs "_"
+                   (pi
+                    (arg (arg-info visible relevant)
+                     (var 17
+                      (arg (arg-info visible relevant) (var 19 []) ∷
+                       arg (arg-info visible relevant) (var 18 []) ∷ [])))
+                    (abs "_"
+                     (var 18
+                      (arg (arg-info visible relevant) (var 20 []) ∷
+                       arg (arg-info visible relevant) (var 19 []) ∷
+                       []))))))))))))))))))))
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (pi
+    (arg (arg-info visible relevant)
+     (var 10
+      (arg (arg-info visible relevant) (var 12 []) ∷
+       arg (arg-info visible relevant) (var 11 []) ∷ [])))
+    (abs "_"
+     (pi
+      (arg (arg-info visible relevant)
+       (var 11
+        (arg (arg-info visible relevant) (var 13 []) ∷
+         arg (arg-info visible relevant) (var 12 []) ∷ [])))
+      (abs "_"
+       (pi
+        (arg (arg-info visible relevant)
+         (var 12
+          (arg (arg-info visible relevant) (var 14 []) ∷
+           arg (arg-info visible relevant) (var 13 []) ∷ [])))
+        (abs "_"
+         (pi
+          (arg (arg-info visible relevant)
+           (var 13
+            (arg (arg-info visible relevant) (var 15 []) ∷
+             arg (arg-info visible relevant) (var 14 []) ∷ [])))
+          (abs "_"
+           (pi
+            (arg (arg-info visible relevant)
+             (var 14
+              (arg (arg-info visible relevant) (var 16 []) ∷
+               arg (arg-info visible relevant) (var 15 []) ∷ [])))
+            (abs "_"
+             (pi
+              (arg (arg-info visible relevant)
+               (var 15
+                (arg (arg-info visible relevant) (var 17 []) ∷
+                 arg (arg-info visible relevant) (var 16 []) ∷ [])))
+              (abs "_"
+               (pi
+                (arg (arg-info visible relevant)
+                 (var 16
+                  (arg (arg-info visible relevant) (var 18 []) ∷
+                   arg (arg-info visible relevant) (var 17 []) ∷ [])))
+                (abs "_"
+                 (pi
+                  (arg (arg-info visible relevant)
+                   (var 17
+                    (arg (arg-info visible relevant) (var 19 []) ∷
+                     arg (arg-info visible relevant) (var 18 []) ∷ [])))
+                  (abs "_"
+                   (pi
+                    (arg (arg-info visible relevant)
+                     (var 18
+                      (arg (arg-info visible relevant) (var 20 []) ∷
+                       arg (arg-info visible relevant) (var 19 []) ∷ [])))
+                    (abs "_"
+                     (var 19
+                      (arg (arg-info visible relevant) (var 21 []) ∷
+                       arg (arg-info visible relevant) (var 20 []) ∷
+                       []))))))))))))))))))))
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (pi
+    (arg (arg-info visible relevant)
+     (var 11
+      (arg (arg-info visible relevant) (var 13 []) ∷
+       arg (arg-info visible relevant) (var 12 []) ∷ [])))
+    (abs "_"
+     (pi
+      (arg (arg-info visible relevant)
+       (var 12
+        (arg (arg-info visible relevant) (var 14 []) ∷
+         arg (arg-info visible relevant) (var 13 []) ∷ [])))
+      (abs "_"
+       (pi
+        (arg (arg-info visible relevant)
+         (var 13
+          (arg (arg-info visible relevant) (var 15 []) ∷
+           arg (arg-info visible relevant) (var 14 []) ∷ [])))
+        (abs "_"
+         (pi
+          (arg (arg-info visible relevant)
+           (var 14
+            (arg (arg-info visible relevant) (var 16 []) ∷
+             arg (arg-info visible relevant) (var 15 []) ∷ [])))
+          (abs "_"
+           (pi
+            (arg (arg-info visible relevant)
+             (var 15
+              (arg (arg-info visible relevant) (var 17 []) ∷
+               arg (arg-info visible relevant) (var 16 []) ∷ [])))
+            (abs "_"
+             (pi
+              (arg (arg-info visible relevant)
+               (var 16
+                (arg (arg-info visible relevant) (var 18 []) ∷
+                 arg (arg-info visible relevant) (var 17 []) ∷ [])))
+              (abs "_"
+               (pi
+                (arg (arg-info visible relevant)
+                 (var 17
+                  (arg (arg-info visible relevant) (var 19 []) ∷
+                   arg (arg-info visible relevant) (var 18 []) ∷ [])))
+                (abs "_"
+                 (pi
+                  (arg (arg-info visible relevant)
+                   (var 18
+                    (arg (arg-info visible relevant) (var 20 []) ∷
+                     arg (arg-info visible relevant) (var 19 []) ∷ [])))
+                  (abs "_"
+                   (pi
+                    (arg (arg-info visible relevant)
+                     (var 19
+                      (arg (arg-info visible relevant) (var 21 []) ∷
+                       arg (arg-info visible relevant) (var 20 []) ∷ [])))
+                    (abs "_"
+                     (var 20
+                      (arg (arg-info visible relevant) (var 22 []) ∷
+                       arg (arg-info visible relevant) (var 21 []) ∷
+                       []))))))))))))))))))))
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (pi
+    (arg (arg-info visible relevant)
+     (var 12
+      (arg (arg-info visible relevant) (var 14 []) ∷
+       arg (arg-info visible relevant) (var 13 []) ∷ [])))
+    (abs "_"
+     (pi
+      (arg (arg-info visible relevant)
+       (var 13
+        (arg (arg-info visible relevant) (var 15 []) ∷
+         arg (arg-info visible relevant) (var 14 []) ∷ [])))
+      (abs "_"
+       (pi
+        (arg (arg-info visible relevant)
+         (var 14
+          (arg (arg-info visible relevant) (var 16 []) ∷
+           arg (arg-info visible relevant) (var 15 []) ∷ [])))
+        (abs "_"
+         (pi
+          (arg (arg-info visible relevant)
+           (var 15
+            (arg (arg-info visible relevant) (var 17 []) ∷
+             arg (arg-info visible relevant) (var 16 []) ∷ [])))
+          (abs "_"
+           (pi
+            (arg (arg-info visible relevant)
+             (var 16
+              (arg (arg-info visible relevant) (var 18 []) ∷
+               arg (arg-info visible relevant) (var 17 []) ∷ [])))
+            (abs "_"
+             (pi
+              (arg (arg-info visible relevant)
+               (var 17
+                (arg (arg-info visible relevant) (var 19 []) ∷
+                 arg (arg-info visible relevant) (var 18 []) ∷ [])))
+              (abs "_"
+               (pi
+                (arg (arg-info visible relevant)
+                 (var 18
+                  (arg (arg-info visible relevant) (var 20 []) ∷
+                   arg (arg-info visible relevant) (var 19 []) ∷ [])))
+                (abs "_"
+                 (pi
+                  (arg (arg-info visible relevant)
+                   (var 19
+                    (arg (arg-info visible relevant) (var 21 []) ∷
+                     arg (arg-info visible relevant) (var 20 []) ∷ [])))
+                  (abs "_"
+                   (pi
+                    (arg (arg-info visible relevant)
+                     (var 20
+                      (arg (arg-info visible relevant) (var 22 []) ∷
+                       arg (arg-info visible relevant) (var 21 []) ∷ [])))
+                    (abs "_"
                      (var 21
-                      (arg (arg-info visible relevant) (var 9 []) ∷
-                       arg (arg-info visible relevant) (var 22 []) ∷ [])))
-                    (abs "_"
-                     (var 22
-                      (arg (arg-info visible relevant) (var 10 []) ∷
-                       arg (arg-info visible relevant) (var 23 []) ∷
+                      (arg (arg-info visible relevant) (var 23 []) ∷
+                       arg (arg-info visible relevant) (var 22 []) ∷
                        []))))))))))))))))))))
-   , 4)
+   , 0)
+  ∷
+  (arg (arg-info visible relevant)
+   (def (quote _≡_)
+    (arg (arg-info hidden relevant) (def (quote lzero) []) ∷
+     arg (arg-info hidden relevant) (var 16 []) ∷
+     arg (arg-info visible relevant) (var 15 []) ∷
+     arg (arg-info visible relevant) (var 14 []) ∷ []))
+   , 0)
   ∷ []
 
-private
+SIZE : Set → Set
+SIZE A = A → Nat
 
-  module Debug-Size where
+mutual
+  size-Term : SIZE Term
+  size-Term (var x args) = suc $′ size-ListArgTerm args + x
+  size-Term (con c args) = suc $ size-ListArgTerm args
+  size-Term (def f args) = suc $ size-ListArgTerm args
+  size-Term (lam v t) = suc $ size-AbsTerm t
+  size-Term (pat-lam cs args) = suc $ size-ListClause cs
+  size-Term (pi a b) = suc (size-ArgTerm a + size-AbsTerm b)
+  size-Term (agda-sort s) = suc $ size-Sort s
+  size-Term (lit l) = 0
+  size-Term (meta x args) = suc $ size-ListArgTerm args
+  size-Term unknown = 0
 
-    SIZE : Set → Set
-    SIZE A = A → Nat
+  size-ArgTerm : SIZE (Arg Term)
+  size-ArgTerm (arg i x) = suc $ size-Term x
 
-    mutual
-      size-Term : SIZE Term
-      size-Term (var x args) = suc $′ size-ListArgTerm args + x
-      size-Term (con c args) = suc $ size-ListArgTerm args
-      size-Term (def f args) = suc $ size-ListArgTerm args
-      size-Term (lam v t) = suc $ size-AbsTerm t
-      size-Term (pat-lam cs args) = suc $ size-ListClause cs
-      size-Term (pi a b) = suc (size-ArgTerm a + size-AbsTerm b)
-      size-Term (agda-sort s) = suc $ size-Sort s
-      size-Term (lit l) = 0
-      size-Term (meta x args) = suc $ size-ListArgTerm args
-      size-Term unknown = 0
+  size-AbsTerm : SIZE (Abs Term)
+  size-AbsTerm (abs s x) = suc $ size-Term x
 
-      size-ArgTerm : SIZE (Arg Term)
-      size-ArgTerm (arg i x) = suc $ size-Term x
+  size-Clause : SIZE Clause
+  size-Clause (clause ps t) = suc $ size-Term t
+  size-Clause (absurd-clause ps) = 0
 
-      size-AbsTerm : SIZE (Abs Term)
-      size-AbsTerm (abs s x) = suc $ size-Term x
+  size-ListClause : SIZE (List Clause)
+  size-ListClause [] = 0
+  size-ListClause (x ∷ xs) = suc $′ size-Clause x + size-ListClause xs
 
-      size-Clause : SIZE Clause
-      size-Clause (clause ps t) = suc $ size-Term t
-      size-Clause (absurd-clause ps) = 0
+  size-Sort : SIZE Sort
+  size-Sort (set t) = suc $ size-Term t
+  size-Sort (lit n) = 0
+  size-Sort unknown = 0
 
-      size-ListClause : SIZE (List Clause)
-      size-ListClause [] = 0
-      size-ListClause (x ∷ xs) = suc $′ size-Clause x + size-ListClause xs
+  size-ListArgTerm : SIZE (List (Arg Term))
+  size-ListArgTerm [] = 0
+  size-ListArgTerm (x ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTerm xs
 
-      size-Sort : SIZE Sort
-      size-Sort (set t) = suc $ size-Term t
-      size-Sort (lit n) = 0
-      size-Sort unknown = 0
+size-ListArgTermNat : SIZE (List (Arg Term × Nat))
+size-ListArgTermNat [] = 0
+size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs + n
 
-      size-ListArgTerm : SIZE (List (Arg Term))
-      size-ListArgTerm [] = 0
-      size-ListArgTerm (x ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTerm xs
+Natμ : (n : Nat) → Mem n
+Natμ zero = putμ refl
+Natμ (suc n) = -- putμ (cong suc refl) --
+               case Natμ n of λ { (putμ n-refl) → putμ (cong suc n-refl) }
 
-    size-ListArgTermNat : SIZE (List (Arg Term × Nat))
-    size-ListArgTermNat [] = 0
-    size-ListArgTermNat ((x , n) ∷ xs) = suc $′ size-ArgTerm x + size-ListArgTermNat xs + n
+mutual
+  Termμ : (t : Term) → Mem t
+  Termμ (var x args) =
+    case Natμ x , ListArgTermμ args of λ
+    { (putμ x-refl , putμ args-refl) →
+      putμ (cong₂ var x-refl args-refl) }
+  Termμ (con c args) =
+    case ListArgTermμ args of λ
+    { (putμ args-refl) →
+      putμ (cong₂ con refl args-refl) }
+  Termμ (def f args) =
+    case ListArgTermμ args of λ
+    { (putμ args-refl) →
+      putμ (cong₂ def refl args-refl) }
+  Termμ (lam v t) =
+    case AbsTermμ t of λ
+    { (putμ t-refl) →
+      putμ (cong₂ lam refl t-refl) }
+  Termμ (pat-lam cs args) = putμ refl
+  Termμ (pi a b) =
+    case ArgTermμ a , AbsTermμ b of λ
+    { (putμ a-refl , putμ b-refl) →
+      putμ (cong₂ pi a-refl b-refl) }
+  Termμ (agda-sort s) =
+    case Sortμ s of λ
+    { (putμ s-refl) →
+      putμ (cong agda-sort s-refl) }
+  Termμ (lit l) = putμ refl
+  Termμ (meta x args) =
+    case ListArgTermμ args of λ
+    { (putμ args-refl) →
+      putμ (cong₂ meta refl args-refl) }
+  Termμ unknown = putμ refl
 
-  open Debug-Size
+  Sortμ : (s : Sort) → Mem s
+  Sortμ (set t) =
+    case Termμ t of λ
+    { (putμ t-refl) →
+      putμ (cong set t-refl) }
+  Sortμ (lit n) = putμ refl
+  Sortμ unknown = putμ refl
 
-private
+  AbsTermμ : (as : Abs Term) → Mem as
+  AbsTermμ (abs s x) =
+    case Termμ x of λ
+    { (putμ x-refl) →
+      putμ (cong₂ abs refl x-refl) }
 
-  Natμ : (n : Nat) → Mem n
-  Natμ zero = putμ refl
-  Natμ (suc n) = -- putμ (cong suc refl) --
-                 case Natμ n of λ { (putμ n-refl) → putμ (cong suc n-refl) }
+  ArgTermμ : (at : Arg Term) → Mem at
+  ArgTermμ (arg i x) =
+    case Termμ x of λ
+    { (putμ x-refl) →
+      putμ (cong₂ arg refl x-refl) }
 
-  mutual
-    Termμ : (t : Term) → Mem t
-    Termμ (var x args) =
-      case Natμ x , ListArgTermμ args of λ
-      { (putμ x-refl , putμ args-refl) →
-        putμ (cong₂ var x-refl args-refl) }
-    Termμ (con c args) =
-      case ListArgTermμ args of λ
-      { (putμ args-refl) →
-        putμ (cong₂ con refl args-refl) }
-    Termμ (def f args) =
-      case ListArgTermμ args of λ
-      { (putμ args-refl) →
-        putμ (cong₂ def refl args-refl) }
-    Termμ (lam v t) =
-      case AbsTermμ t of λ
-      { (putμ t-refl) →
-        putμ (cong₂ lam refl t-refl) }
-    Termμ (pat-lam cs args) = putμ refl
-    Termμ (pi a b) =
-      case ArgTermμ a , AbsTermμ b of λ
-      { (putμ a-refl , putμ b-refl) →
-        putμ (cong₂ pi a-refl b-refl) }
-    Termμ (agda-sort s) =
-      case Sortμ s of λ
-      { (putμ s-refl) →
-        putμ (cong agda-sort s-refl) }
-    Termμ (lit l) = putμ refl
-    Termμ (meta x args) =
-      case ListArgTermμ args of λ
-      { (putμ args-refl) →
-        putμ (cong₂ meta refl args-refl) }
-    Termμ unknown = putμ refl
+  ListArgTermμ : (ats : List (Arg Term)) → Mem ats
+  ListArgTermμ [] = putμ refl
+  ListArgTermμ (at ∷ ats) =
+    case ArgTermμ at , ListArgTermμ ats of λ
+    { (putμ at-refl , putμ ats-refl) →
+      putμ (cong₂ _∷_ at-refl ats-refl) }
 
-    Sortμ : (s : Sort) → Mem s
-    Sortμ (set t) =
-      case Termμ t of λ
-      { (putμ t-refl) →
-        putμ (cong set t-refl) }
-    Sortμ (lit n) = putμ refl
-    Sortμ unknown = putμ refl
+ListArgTerm×Natμ : (atns : List (Arg Term × Nat)) → Mem atns
+ListArgTerm×Natμ [] = putμ refl
+ListArgTerm×Natμ ((at , n) ∷ atns) =
+  case ArgTermμ at , Natμ n , ListArgTerm×Natμ atns of λ
+  { (putμ at-refl , putμ n-refl , putμ atns-refl) →
+    putμ (cong₂ _∷_ (cong₂ _,_ at-refl n-refl) atns-refl) }
 
-    AbsTermμ : (as : Abs Term) → Mem as
-    AbsTermμ (abs s x) =
-      case Termμ x of λ
-      { (putμ x-refl) →
-        putμ (cong₂ abs refl x-refl) }
+Γ[w/L]×indexes[Γ]&'  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → List (Arg Type × Nat)
+Γ[w/L]×indexes[Γ]&' l≡r L [] ∣Γ∣ = []
+Γ[w/L]×indexes[Γ]&' l≡r L (γ ∷ γs) ∣Γ∣ =
+  (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&' l≡r L γs ∣Γ∣
 
-    ArgTermμ : (at : Arg Term) → Mem at
-    ArgTermμ (arg i x) =
-      case Termμ x of λ
-      { (putμ x-refl) →
-        putμ (cong₂ arg refl x-refl) }
+Γ[w/L]×indexes[Γ]&'' : List (Arg Type) → List (Arg Type × Nat)
+Γ[w/L]×indexes[Γ]&'' [] = []
+Γ[w/L]×indexes[Γ]&'' (γ ∷ γs) =
+  (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&'' γs
 
-    ListArgTermμ : (ats : List (Arg Term)) → Mem ats
-    ListArgTermμ [] = putμ refl
-    ListArgTermμ (at ∷ ats) =
-      case ArgTermμ at , ListArgTermμ ats of λ
-      { (putμ at-refl , putμ ats-refl) →
-        putμ (cong₂ _∷_ at-refl ats-refl) }
+record Request : Set where
+  field
+    l≡r : Term
+    A : Type
+    L : Term
+    R : Term
+    Γ : List (Arg Type)
+    𝐺 : Type
 
-  ListArgTerm×Natμ : (atns : List (Arg Term × Nat)) → Mem atns
-  ListArgTerm×Natμ [] = putμ refl
-  ListArgTerm×Natμ ((at , n) ∷ atns) =
-    case ArgTermμ at , Natμ n , ListArgTerm×Natμ atns of λ
-    { (putμ at-refl , putμ n-refl , putμ atns-refl) →
-      putμ (cong₂ _∷_ (cong₂ _,_ at-refl n-refl) atns-refl) }
+getRequest : Term → TC Request
+getRequest hole = do
+  Γ ← pure the-Γ -|
+  case ListArgTermμ ({-reverse -}Γ) of λ { (getμ reverse-Γ) →
+  pure $ record { l≡r = unknown ; A = unknown ; L = unknown ; R = unknown ; Γ = reverse-Γ ; 𝐺 = unknown } }
 
-  Γ[w/L]×indexes[Γ]&'  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → List (Arg Type × Nat)
-  Γ[w/L]×indexes[Γ]&' l≡r L [] ∣Γ∣ = []
-  Γ[w/L]×indexes[Γ]&' l≡r L (γ ∷ γs) ∣Γ∣ =
-    (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&' l≡r L γs ∣Γ∣
+getRequest' : Request
+getRequest' =
+  case the-Γ of λ { Γ →
+  case ListArgTermμ ({-reverse-} Γ) of λ { (getμ reverse-Γ) →
+  record { l≡r = unknown ; A = unknown ; L = unknown ; R = unknown ; Γ = reverse-Γ ; 𝐺 = unknown } } }
 
-  Γ[w/L]×indexes[Γ]&'' : List (Arg Type) → List (Arg Type × Nat)
-  Γ[w/L]×indexes[Γ]&'' [] = []
-  Γ[w/L]×indexes[Γ]&'' (γ ∷ γs) =
-    (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&'' γs
+record Response : Set where
+  field
+    Γ[w/L]×indexes[Γ] : List (Arg Type × Nat)
+    ∣Γ∣ : Nat
 
-  record Request : Set where
-    field
-      l≡r : Term
-      A : Type
-      L : Term
-      R : Term
-      Γ : List (Arg Type)
-      𝐺 : Type
+  dumb-test : List Nat
+  dumb-test = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
 
-  getRequest : Term → Term → TC Request
-  getRequest l≡r hole = do
-    L≡R ← inferType l≡r -|
-    L≡R-matched ← maybe (typeError (strErr "not an equality" ∷ termErr l≡r ∷ termErr L≡R ∷ [])) pure $
-      match 3 (def (quote _≡_) (hArg unknown ∷ (hArg (var₀ 0)) ∷ (vArg (var₀ 1)) ∷ (vArg (var₀ 2)) ∷ [])) L≡R -|
-    𝐺 ← inferFunRange hole -|
-    Γ ← getContext -|
-    case L≡R-matched of λ { (A ∷ L ∷ R ∷ []) →
-    case Termμ A , Termμ L , Termμ R of λ { (getμ A , getμ L , getμ R) →
-    case ListArgTermμ (reverse Γ) of λ { (getμ reverse-Γ) →
-    pure $ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = reverse-Γ ; 𝐺 = 𝐺 } } } }
+Responseμ : (r : Response) → Mem r
+Responseμ record { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } = putμ refl
 
-  record Response : Set where
-    field
-      Γ[w/L]×indexes[Γ] : List (Arg Type × Nat)
-      ∣Γ∣ : Nat
+getResponse : Request → Response
+getResponse q =
+  let open Request q
+  in
+  case length Γ                                of λ   { ∣Γ∣ →
+  case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
+  case Γ[w/L]×indexes[Γ]&'' Γ                  of λ  { Γ[w/L]×indexes[Γ] →
+  case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
+     record
+     { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
+     ; ∣Γ∣ = ∣Γ∣ } }}}}
 
-    dumb-test : List Nat
-    dumb-test = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
-
-  Responseμ : (r : Response) → Mem r
-  Responseμ record { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } = putμ refl
-
-  getResponse : Request → Response
-  getResponse q =
-    let open Request q
-    in
-    case length Γ                                of λ   { ∣Γ∣ →
-    case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
---    case Γ[w/L]×indexes[Γ]&'' l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
-    case Γ[w/L]×indexes[Γ]&'' Γ                  of λ  { Γ[w/L]×indexes[Γ] →
-    case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-       record
-       { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-       ; ∣Γ∣ = ∣Γ∣ } }}}}
-
-  getResponse-foo : Request → Response
-  getResponse-foo q =
-    let open Request q
-    in
-    case length Γ                                of λ   { ∣Γ∣ →
-    case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
-    case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
-    case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-       record
-       { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-       ; ∣Γ∣ = ∣Γ∣ } }}}}
+getResponse-foo : Request → Response
+getResponse-foo q =
+  let open Request q
+  in
+  case length Γ                                of λ   { ∣Γ∣ →
+  case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
+  case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
+  case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
+     record
+     { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
+     ; ∣Γ∣ = ∣Γ∣ } }}}}
 
 macro
-  reright-debug-foo-before : Term → Tactic
-  reright-debug-foo-before l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse-foo q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                 ∷
-                [] ) }
-
-  reright-debug-foo-after : Term → Tactic
-  reright-debug-foo-after l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse-foo q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
-                [] ) }
-
-  reright-debug-reg-before : Term → Tactic
-  reright-debug-reg-before l≡r hole =
-    q ← getRequest l≡r hole -|
+  reright-debug-show-before : Tactic
+  reright-debug-show-before hole =
+    q ← getRequest hole -|
     let open Request q in
     case Responseμ (getResponse q) of λ { (getμ r) →
     let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` (size-ListArgTermNat Γ[w/L]×indexes[Γ]))                  ∷
+    typeError ( strErr "reright-debug"            ∷ termErr (` (Γ[w/L]×indexes[Γ]))                 ∷
                 [] ) }
 
-  reright-debug-reg-after : Term → Tactic
-  reright-debug-reg-after l≡r hole =
-    q ← getRequest l≡r hole -|
-    let open Request q in
-    case Responseμ (getResponse q) of λ { (getμ r) →
-    let open Response r in
-    typeError ( strErr "reright-debug"            ∷ termErr (` dumb-test)                  ∷
-                [] ) }
+pure-reg-after : List Nat
+pure-reg-after =
+  case getRequest' of λ { q →
+  let open Request q in
+  case Responseμ (getResponse q) of λ { (getμ r) →
+  let open Response r in
+  dumb-test } }
 
+pure-reg-before : Nat
+pure-reg-before =
+  case getRequest' of λ { q →
+  let open Request q in
+  case Responseμ (getResponse q) of λ { (getμ r) →
+  let open Response r in
+  size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
 
-module Benchmarks where
-  FOO : Set₁
-  FOO = (A : Set) (x y : A) (F : A → A → Set) →
+pure-foo-after : List Nat
+pure-foo-after =
+  case getRequest' of λ { q →
+  let open Request q in
+  case Responseμ (getResponse-foo q) of λ { (getμ r) →
+  let open Response r in
+  dumb-test } }
 
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+pure-foo-before : Nat
+pure-foo-before =
+  case getRequest' of λ { q →
+  let open Request q in
+  case Responseμ (getResponse-foo q) of λ { (getμ r) →
+  let open Response r in
+  size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
 
-        x ≡ y →
+--benchmark-pure-foo-before : Nat
+--benchmark-pure-foo-before = unquote (λ hole → unify hole (` pure-foo-before))
 
-        F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
+--benchmark-pure-foo-after : List Nat
+--benchmark-pure-foo-after = unquote (λ hole → unify hole (` pure-foo-after))
 
-        Set
+--benchmark-pure-reg-before : Nat
+--benchmark-pure-reg-before = unquote (λ hole → unify hole (` pure-reg-before))
 
-  foo : FOO
-  foo A x y F
-      _ _ _ _ _ _ _ _ _ _
-      x≡y = reright-debug-reg-after x≡y {!!}
+--benchmark-pure-reg-after : List Nat
+--benchmark-pure-reg-after = unquote (λ hole → unify hole (` pure-reg-after))
+
+foo : Set
+foo = {!pure-reg-after!}
       -- using full Natμ
       -- Typing.CheckRHS
       -- reright-debug-reg-after               11,869ms
