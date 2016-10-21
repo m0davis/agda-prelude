@@ -1379,65 +1379,40 @@ ListArgTerm×Natμ ((at , n) ∷ atns) =
   { (putμ at-refl , putμ n-refl , putμ atns-refl) →
     putμ (cong₂ _∷_ (cong₂ _,_ at-refl n-refl) atns-refl) }
 
-Γ[w/L]×indexes[Γ]&'  : (l≡r : Term) → (L : Type) → (Γ : List (Arg Type)) (∣Γ∣ : Nat) → List (Arg Type × Nat)
-Γ[w/L]×indexes[Γ]&' l≡r L [] ∣Γ∣ = []
-Γ[w/L]×indexes[Γ]&' l≡r L (γ ∷ γs) ∣Γ∣ =
-  (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&' l≡r L γs ∣Γ∣
+before-operation : List (Arg Type) → List (Arg Type × Nat)
+before-operation [] = []
+before-operation (γ ∷ γs) =
+  (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ before-operation γs
 
-Γ[w/L]×indexes[Γ]&'' : List (Arg Type) → List (Arg Type × Nat)
-Γ[w/L]×indexes[Γ]&'' [] = []
-Γ[w/L]×indexes[Γ]&'' (γ ∷ γs) =
-  (weaken 1 (weaken 1 (weaken 1 γ)) , 0) ∷ Γ[w/L]×indexes[Γ]&'' γs
-
-record Request : Set where
-  field
-    l≡r : Term
-    A : Type
-    L : Term
-    R : Term
-    Γ : List (Arg Type)
-    𝐺 : Type
-
-getRequest : Term → TC Request
-getRequest hole = do
-  Γ ← pure the-Γ -|
-  case ListArgTermμ ({-reverse -}Γ) of λ { (getμ reverse-Γ) →
-  pure $ record { l≡r = unknown ; A = unknown ; L = unknown ; R = unknown ; Γ = reverse-Γ ; 𝐺 = unknown } }
-
-getRequest' : Request
-getRequest' =
-  case the-Γ of λ { Γ →
-  case ListArgTermμ ({-reverse-} Γ) of λ { (getμ reverse-Γ) →
-  record { l≡r = unknown ; A = unknown ; L = unknown ; R = unknown ; Γ = reverse-Γ ; 𝐺 = unknown } } }
+getRequest : List (Arg Type)
+getRequest =
+  case ListArgTermμ the-Γ of λ { (getμ Γ) →
+  Γ }
 
 record Response : Set where
   field
     Γ[w/L]×indexes[Γ] : List (Arg Type × Nat)
     ∣Γ∣ : Nat
 
-  dumb-test : List Nat
-  dumb-test = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
+  after-operation : List Nat
+  after-operation = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
 
 Responseμ : (r : Response) → Mem r
 Responseμ record { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } = putμ refl
 
-getResponse : Request → Response
-getResponse q =
-  let open Request q
-  in
-  case length Γ                                of λ   { ∣Γ∣ →
+getResponse-reg : List (Arg Type) → Response
+getResponse-reg q =
+  case length q                                of λ   { ∣Γ∣ →
   case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
-  case Γ[w/L]×indexes[Γ]&'' Γ                  of λ  { Γ[w/L]×indexes[Γ] →
+  case before-operation q                      of λ   { Γ[w/L]×indexes[Γ] →
   case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
      record
      { Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
      ; ∣Γ∣ = ∣Γ∣ } }}}}
 
-getResponse-foo : Request → Response
+getResponse-foo : List (Arg Type) → Response
 getResponse-foo q =
-  let open Request q
-  in
-  case length Γ                                of λ   { ∣Γ∣ →
+  case length q                                of λ   { ∣Γ∣ →
   case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
   case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
   case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
@@ -1448,41 +1423,35 @@ getResponse-foo q =
 macro
   reright-debug-show-before : Tactic
   reright-debug-show-before hole =
-    q ← getRequest hole -|
-    let open Request q in
-    case Responseμ (getResponse q) of λ { (getμ r) →
+    case Responseμ (getResponse-reg getRequest) of λ { (getμ r) →
     let open Response r in
     typeError ( strErr "reright-debug"            ∷ termErr (` (Γ[w/L]×indexes[Γ]))                 ∷
                 [] ) }
 
 pure-reg-after : List Nat
 pure-reg-after =
-  case getRequest' of λ { q →
-  let open Request q in
-  case Responseμ (getResponse q) of λ { (getμ r) →
+  case getRequest of λ { q →
+  case Responseμ (getResponse-reg q) of λ { (getμ r) →
   let open Response r in
-  dumb-test } }
+  after-operation } }
 
 pure-reg-before : Nat
 pure-reg-before =
-  case getRequest' of λ { q →
-  let open Request q in
-  case Responseμ (getResponse q) of λ { (getμ r) →
+  case getRequest of λ { q →
+  case Responseμ (getResponse-reg q) of λ { (getμ r) →
   let open Response r in
   size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
 
 pure-foo-after : List Nat
 pure-foo-after =
-  case getRequest' of λ { q →
-  let open Request q in
+  case getRequest of λ { q →
   case Responseμ (getResponse-foo q) of λ { (getμ r) →
   let open Response r in
-  dumb-test } }
+  after-operation } }
 
 pure-foo-before : Nat
 pure-foo-before =
-  case getRequest' of λ { q →
-  let open Request q in
+  case getRequest of λ { q →
   case Responseμ (getResponse-foo q) of λ { (getμ r) →
   let open Response r in
   size-ListArgTermNat Γ[w/L]×indexes[Γ] } }
@@ -1499,8 +1468,12 @@ pure-foo-before =
 --benchmark-pure-reg-after : List Nat
 --benchmark-pure-reg-after = unquote (λ hole → unify hole (` pure-reg-after))
 
-foo : Set
-foo = {!pure-reg-after!}
+foo : Set × Set × Set × Set
+foo = {!pure-foo-before!} ,
+      {!pure-foo-after!} ,
+      {!pure-reg-before!} ,
+      {!pure-reg-after!}
+
       -- using full Natμ
       -- Typing.CheckRHS
       -- reright-debug-reg-after               11,869ms
