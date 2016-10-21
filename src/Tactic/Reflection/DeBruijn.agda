@@ -109,8 +109,8 @@ private
   v'' lo k x = (maybe (var x) (λ { x → var x }) (wkVar' lo k x))
 
   wk : Wk Term
---  wk lo k (var x args)  = var (wkVar lo k x) (wkArgs lo k args)
-  wk lo k (var x args) = maybe (var x (wkArgs lo k args)) (λ { x → var x (wkArgs lo k args) }) $ wkVar' lo k x
+  wk lo k (var x args)  = var (wkVar lo k x) (wkArgs lo k args)
+--  wk lo k (var x args) = maybe (var x (wkArgs lo k args)) (λ { x → var x (wkArgs lo k args) }) $ wkVar' lo k x
 {-
   wk lo k (var x args) =  v'' lo k x (wkArgs lo k args) where
     v' : List (Arg Term) → Term

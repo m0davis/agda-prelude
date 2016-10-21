@@ -1,7 +1,7 @@
 --{-# OPTIONS --show-implicit #-}
 module Reright where
   open import Prelude
-  open import Tactic.Reflection.Reright
+  open import Tactic.Reright
   open import Agda.Builtin.Reflection
   open import Tactic.Reflection
   open import Tactic.Reflection.Quote
@@ -20,72 +20,12 @@ module Reright where
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
           (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
 
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-          (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
-
           x ≡ y →
 
           F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
 
           Set
     foo A x y F
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
-        _ _ _ _ _ _ _ _ _ _
         _ _ _ _ _ _ _ _ _ _
         x≡y = reright-debug x≡y {!!}
 
