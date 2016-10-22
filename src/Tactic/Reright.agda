@@ -1013,6 +1013,7 @@ private
   w≡R& R = vArg (def₂ (quote _≡_) (var₀ 0) (weaken 1 R))
 
   record Request : Set where
+    no-eta-equality
     field
       l≡r : Term
       A : Type
@@ -1020,6 +1021,9 @@ private
       R : Term
       Γ : List (Arg Type)
       𝐺 : Type
+
+  Requestμ : (q : Request) → Mem q
+  Requestμ record { l≡r = l≡r ; A = A ; L = L ; R = R ; Γ = Γ ; 𝐺 = 𝐺 } = putμ refl
 
   getRequest : Term → Term → TC Request
   getRequest l≡r hole = do
@@ -1069,48 +1073,11 @@ private
   Responseμ record { l≡r = l≡r ; w = w ; w≡R = w≡R ; Γ[w/L] = Γ[w/L] ; Γ[R/L] = Γ[R/L] ; 𝐺[R/L] = 𝐺[R/L] ; 𝐺[w/L] = 𝐺[w/L] ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } =
     putμ refl
 
-  getResponse : Request → Response
-  getResponse q =
-    let open Request q
-    in
-    case length Γ                                of λ   { ∣Γ∣ →
-    case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
-    case Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
-    --case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
-    case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
-    --case ListArgTerm×Natμ' Γ[w/L]×indexes[Γ]      of λ   { Γ[w/L]×indexes[Γ] →
-    case length Γ[w/L]×indexes[Γ]                of λ  { ∣Γᴸ∣ →
-    case Natμ ∣Γᴸ∣                               of λ  { (getμ ∣Γᴸ∣) →
-    case indexes[Γ]& Γ[w/L]×indexes[Γ]           of λ { indexes[Γ] →
-    case Γ[w/L]& Γ[w/L]×indexes[Γ]               of λ { Γ[w/L] →
-    --case ListArgTermμ Γ[w/L]                     of   λ { (getμ Γ[w/L]) →
-    case Γ[R/L]& R Γ[w/L] ∣Γᴸ∣                   of λ { Γ[R/L] →
-    --case ListArgTermμ Γ[R/L]                     of λ { (getμ Γ[R/L]) →
-    case 𝐺[R/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣  of λ { 𝐺[R/L]-Reordering →
-    case Reorderingμ 𝐺[R/L]-Reordering           of λ { (getμ 𝐺[R/L]-Reordering) →
-    case 𝐺[R/L]& 𝐺 R L 𝐺[R/L]-Reordering ∣Γᴸ∣   of λ { 𝐺[R/L] →
-    --case Termμ 𝐺[R/L]                            of  λ { (getμ 𝐺[R/L]) →
-    case 𝐺[w/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣  of λ { 𝐺[w/L]-Reordering →
-    case Reorderingμ 𝐺[w/L]-Reordering           of λ { (getμ 𝐺[w/L]-Reordering) →
-    case 𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣      of λ { 𝐺[w/L] →
-    --case Termμ 𝐺[w/L]                            of λ { (getμ 𝐺[w/L]) →
-       record
-       { l≡r = l≡r
-       ; w = case w& A of id
-       ; w≡R = case w≡R& R of id
-       ; Γ[w/L] = Γ[w/L]
-       ; Γ[R/L] = Γ[R/L]
-       ; 𝐺[R/L] = 𝐺[R/L]
-       ; 𝐺[w/L] = 𝐺[w/L]
-       ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-       ; ∣Γ∣ = ∣Γ∣ } }}}}}}}}}}}}}}}
-
   getResponse-foo : Request → Response
   getResponse-foo q =
     let open Request q
     in
-    case length Γ                                of λ   { ∣Γ∣ →
-    case Natμ ∣Γ∣                                of λ   { (getμ ∣Γ∣) →
+    case Natμ (length Γ)                           of λ   { (getμ ∣Γ∣) →
     --case Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣          of λ  { Γ[w/L]×indexes[Γ] →
     case test-foo                                of λ   { Γ[w/L]×indexes[Γ] →
     case ListArgTerm×Natμ Γ[w/L]×indexes[Γ]      of λ   { (getμ Γ[w/L]×indexes[Γ]) →
@@ -1127,19 +1094,62 @@ private
     case 𝐺[R/L]& 𝐺 R L 𝐺[R/L]-Reordering ∣Γᴸ∣   of λ { 𝐺[R/L] →
     --case Termμ 𝐺[R/L]                            of  λ { (getμ 𝐺[R/L]) →
     case 𝐺[w/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣  of λ { 𝐺[w/L]-Reordering →
-    case Reorderingμ 𝐺[w/L]-Reordering           of λ { (getμ 𝐺[w/L]-Reordering) →
-    case 𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣      of λ { 𝐺[w/L] →
+    case Reorderingμ 𝐺[w/L]-Reordering           of λ where
+    (getμ 𝐺[w/L]-Reordering) →
+     case 𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣      of λ where
+     𝐺[w/L] → record
+
     --case Termμ 𝐺[w/L]                            of λ { (getμ 𝐺[w/L]) →
-       record
-       { l≡r = l≡r
-       ; w = case w& A of id
-       ; w≡R = case w≡R& R of id
-       ; Γ[w/L] = Γ[w/L]
-       ; Γ[R/L] = Γ[R/L]
-       ; 𝐺[R/L] = 𝐺[R/L]
-       ; 𝐺[w/L] = 𝐺[w/L]
-       ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
-       ; ∣Γ∣ = ∣Γ∣ } }}}}}}}}}}}}}}}
+
+         { l≡r = l≡r
+         ; w = case w& A of id
+         ; w≡R = case w≡R& R of id
+         ; Γ[w/L] = Γ[w/L]
+         ; Γ[R/L] = Γ[R/L]
+         ; 𝐺[R/L] = 𝐺[R/L]
+         ; 𝐺[w/L] = 𝐺[w/L]
+         ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
+         ; ∣Γ∣ = ∣Γ∣ } }}}}}}}}}}}}
+
+  getResponse : Request → Response
+  getResponse q =
+    let open Request q in
+    case Natμ $
+         length Γ
+    of λ { (getμ ∣Γ∣) →
+    case ListArgTerm×Natμ $
+         Γ[w/L]×indexes[Γ]& l≡r L Γ ∣Γ∣
+    of λ { (getμ Γ[w/L]×indexes[Γ]) →
+    case Natμ $
+         length Γ[w/L]×indexes[Γ]
+    of λ { (getμ ∣Γᴸ∣) →
+    let indexes[Γ] = indexes[Γ]& Γ[w/L]×indexes[Γ] in
+    let Γ[w/L] = Γ[w/L]& Γ[w/L]×indexes[Γ] in
+    case ListArgTermμ $
+         Γ[R/L]& R Γ[w/L] ∣Γᴸ∣
+    of λ { (getμ Γ[R/L]) →
+    case Reorderingμ $
+         𝐺[R/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣
+    of λ { (getμ 𝐺[R/L]-Reordering) →
+    case Termμ $
+         𝐺[R/L]& 𝐺 R L 𝐺[R/L]-Reordering ∣Γᴸ∣
+    of λ { (getμ 𝐺[R/L]) →
+    case Reorderingμ $
+         𝐺[w/L]-Reordering& ∣Γ∣ indexes[Γ] ∣Γᴸ∣
+    of λ { (getμ 𝐺[w/L]-Reordering) →
+    case Termμ $
+         𝐺[w/L]& 𝐺 L 𝐺[w/L]-Reordering ∣Γᴸ∣
+    of λ { (getμ 𝐺[w/L]) →
+    record
+    { l≡r = l≡r
+    ; w = case w& A of id
+    ; w≡R = case w≡R& R of id
+    ; Γ[w/L] = Γ[w/L]
+    ; Γ[R/L] = Γ[R/L]
+    ; 𝐺[R/L] = 𝐺[R/L]
+    ; 𝐺[w/L] = 𝐺[w/L]
+    ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ]
+    ; ∣Γ∣ = ∣Γ∣ }}}}}}}}}
 
 macro
 
@@ -1147,12 +1157,50 @@ macro
   reright l≡r hole =
     q ← getRequest l≡r hole -|
     n ← freshName "reright" -|
-    --let open Response (getResponse q) in
-    case getResponse q of λ
-    { r →
-      let open Response r in
-      catchTC (typeError [ strErr "error defining helper function" ]) (define (vArg n) helper-type [ clause helper-patterns helper-term ]) ~|
-      unify hole (def n helper-call-args) }
+    case Requestμ $
+         q
+    of λ { (getμ q) →
+    case Responseμ $
+         getResponse q
+    of λ { (getμ r) →
+    let open Response r in
+    catchTC (typeError [ strErr "error defining helper function" ]) (define (vArg n) helper-type [ clause helper-patterns helper-term ]) ~|
+    hole =′ def n helper-call-args }}
+
+  reright-debug : Term → Tactic
+  reright-debug l≡r hole =
+    q ← getRequest l≡r hole -|
+    n ← freshName "reright" -|
+    case Requestμ $
+         q
+    of λ { (getμ q) →
+    let open Request q in
+    case Responseμ $
+         getResponse q
+    of λ { (getμ r) →
+    let open Response r in
+    typeError ( strErr "reright-debug"          ∷
+                --strErr "\nl≡r:"                 ∷ termErr (` (Request.l≡r q))      ∷
+                --strErr "\nA:"                   ∷ termErr (` A)                    ∷
+                --strErr "\nL:"                   ∷ termErr (` L)                    ∷
+                --strErr "\nR:"                   ∷ termErr (` R)                    ∷
+                --strErr "\nΓ:"                   ∷ termErr (` Γ)                    ∷
+                --strErr "\nlength Γ:"            ∷ termErr (` (length Γ))           ∷
+                --strErr "\n𝐺:"                   ∷ termErr (` 𝐺)                   ∷
+                --strErr "\nΓ[w/L]×indexes[Γ]:"   ∷ termErr (` Γ[w/L]×indexes[Γ])    ∷
+                --strErr "\nΓ[w/L]:"              ∷ termErr (` Γ[w/L])               ∷
+                --strErr "\nindexes[Γ]:"          ∷ termErr (` (snd <$> Γ[w/L]×indexes[Γ]))           ∷
+                --strErr "\nΓ[R/L]:"              ∷ termErr (` Γ[R/L])               ∷
+                --strErr "\n𝐺[R/L]:"              ∷ termErr (` 𝐺[R/L])               ∷
+                --strErr "\nRE𝐺[R/L]:"            ∷ termErr (` reorderings-𝐺[R/L])   ∷
+                --strErr "\n𝐺[w/L]:"              ∷ termErr (` 𝐺[w/L])               ∷
+                --strErr "\nw:"                   ∷ termErr (` w)                    ∷
+                --strErr "\nw≡R:"                 ∷ termErr (` w≡R)                  ∷
+                strErr "helper-type:"           ∷ termErr helper-type              ∷
+                --strErr "helper-patterns:"       ∷ termErr (` helper-patterns)      ∷
+                --strErr "helper-term:"           ∷ termErr (` helper-term)          ∷
+                --strErr "helper-call-args:"      ∷ termErr (` helper-call-args)     ∷
+                [] ) }}
 
 macro
   reright-debug-foo-before : Term → Tactic
@@ -1207,8 +1255,21 @@ module Benchmarks where
         (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
         (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
 
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+        (_ : F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y) →
+
         x ≡ y →
 
+        F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
+        F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
         F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y → F x y →
 
         Set
@@ -1216,7 +1277,8 @@ module Benchmarks where
   foo : FOO
   foo A x y F
       _ _ _ _ _ _ _ _ _ _
-      x≡y = reright-debug-reg-after x≡y {!!}
+      _ _ _ _ _ _ _ _ _ _
+      x≡y = reright-debug x≡y {!!} -- reright-debug-reg-after x≡y {!!}
       -- using full Natμ
       -- Typing.CheckRHS
       -- reright-debug-reg-after               11,869ms
