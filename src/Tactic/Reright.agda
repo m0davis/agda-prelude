@@ -294,21 +294,15 @@ private
     helper-type = telPi (w ∷ w≡R ∷ reverse Γ[w/L]) (telPi [ vArg (telPi Γ[R/L] 𝐺[R/L]) ] 𝐺[w/L])
 
     helper-patterns : List (Arg Pattern)
-    helper-patterns = (hArg dot ∷ vArg (con₀ (quote refl)) ∷ telePat Γ[w/L]) ++ [ vArg (var "_") ]
+    helper-patterns = (hArg dot ∷ vArg (con₀ (quote refl)) ∷ telePat (reverse Γ[w/L])) ++ [ vArg (var "_") ]
 
     helper-term : Term
-    helper-term = var 0 (weaken 1 (teleArgs Γ[w/L]))
+    helper-term = var 0 (weaken 1 (teleArgs (reverse Γ[w/L])))
 
     helper-call-args : List (Arg Term)
     helper-call-args = hArg unknown ∷ vArg l≡r ∷ helper-call-args' where
       helper-call-args' : List (Arg Term)
       helper-call-args' = (λ { (γ[w/L] , index[γ]) → var₀ (∣Γ∣ - index[γ] - 1) <$ γ[w/L] }) <$> reverse Γ[w/L]×indexes[Γ]
-
-    stupid-test : List (Arg Term)
-    stupid-test = (λ { (γ[w/L] , index[γ]) → var₀ (∣Γ∣ - index[γ] - 1) <$ γ[w/L] }) <$> Γ[w/L]×indexes[Γ]
-
-    dumb-test : List Nat
-    dumb-test = (λ { (γ[w/L] , index[γ]) → ∣Γ∣ - index[γ] }) <$> Γ[w/L]×indexes[Γ]
 
   Responseμ : (r : Response) → Mem r
   Responseμ record { l≡r = l≡r ; w = w ; w≡R = w≡R ; Γ[w/L] = Γ[w/L] ; Γ[R/L] = Γ[R/L] ; 𝐺[R/L] = 𝐺[R/L] ; 𝐺[w/L] = 𝐺[w/L] ; Γ[w/L]×indexes[Γ] = Γ[w/L]×indexes[Γ] ; ∣Γ∣ = ∣Γ∣ } =
