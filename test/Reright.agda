@@ -6,6 +6,104 @@ module Reright where
   open import Tactic.Reflection
   open import Tactic.Reflection.Quote
 
+  module MotivatingCase
+    {K : Set}
+    {{isDecEquivalence/K : Eq K}}
+    (V : K → Set)
+    (Carrier : Nat → Set)
+    where
+
+    ∃ : ∀ {a b} {A : Set a} (B : A → Set b) → Set (a ⊔ b)
+    ∃ = Σ _
+
+    record Map : Set₁ where
+      field
+        _∈_ : ∀ {s} → K → Carrier s → Set
+
+      _∉_ : ∀ {s} → K → Carrier s → Set
+      _∉_ k m = ¬ k ∈ m
+
+      field
+        ∅-is-empty : ∀ {𝑘} {∅ : Carrier 0} → 𝑘 ∉ ∅
+        get : ∀ {k : K} {s} {m : Carrier s} → k ∈ m → V k
+        get-is-unique : ∀ {k : K} {s} {m : Carrier s} → {k∈m¹ : k ∈ m} {k∈m² : k ∈ m} → get k∈m¹ ≡ get k∈m²
+
+      infixl 40 _⊆_
+      _⊆_ : ∀ {s₀ s₁} → Carrier s₀ → Carrier s₁ → Set
+      _⊆_ m₀ m₁ = ∀ {𝑘} → (𝑘∈m₀ : 𝑘 ∈ m₀) → ∃ λ 𝑘∈m₁ → get 𝑘∈m₀ ≡ get {m = m₁} 𝑘∈m₁
+
+      infixl 40 _⊂_∣_
+      _⊂_∣_ : ∀ {s₀ s₁} → Carrier s₀ → Carrier s₁ → (K → Set) → Set
+      _⊂_∣_ m₀ m₁ c = ∀ {𝑘} → c 𝑘 → (𝑘∈m₀ : 𝑘 ∈ m₀) → ∃ λ (𝑘∈m₁ : 𝑘 ∈ m₁) → get 𝑘∈m₀ ≡ get 𝑘∈m₁
+
+      field
+        put : ∀ {k₁ : K} (v₁ : V k₁) {s₀} {m₀ : Carrier s₀} → k₁ ∉ m₀ → ∃ λ (m₁ : Carrier (suc s₀)) → ∃ λ (k₁∈m₁ : k₁ ∈ m₁) → get k₁∈m₁ ≡ v₁ × m₀ ⊆ m₁
+        _∈?_ : ∀ {s} → (k : K) (m : Carrier s) → Dec (k ∈ m)
+        choose : ∀ {s} → (m : Carrier s) → Dec (∃ λ k → k ∈ m)
+        pick : ∀ {k₁ : K} {s₀} {m₁ : Carrier (suc s₀)} → k₁ ∈ m₁ → ∃ λ (m₀ : Carrier s₀) → m₀ ⊆ m₁ × k₁ ∉ m₀
+
+    module _ (some-Map : Map) where
+      open Map some-Map
+
+      helper : ∀ {𝑘}
+                  {a}
+                  {s/x}
+                  {s/y}
+                  {s/z}
+                  {x : Carrier s/x}
+                  {y : Carrier s/y}
+                  {z : Carrier s/z}
+                  {a∈x : a ∈ x}
+                  {a∈y : a ∈ y}
+                  (𝑘≡a : 𝑘 ≡ a)
+                  {𝑘∈y : 𝑘 ∈ y}
+                  (get/a∈y≡get/a∈x : get a∈y ≡ get a∈x)
+                  (Σa∈z[get/a∈x≡get/a∈z] : Σ (a ∈ z) (λ a∈z → get a∈x ≡ get a∈z))
+                → Σ (𝑘 ∈ z) (λ 𝑘∈z → get 𝑘∈y ≡ get 𝑘∈z)
+      helper refl get/a∈y≡get/a∈x (a∈z , get/a∈x≡get/z) =
+        a∈z ,
+        (get-is-unique ⟨≡⟩ get/a∈y≡get/a∈x ⟨≡⟩ get/a∈x≡get/z)
+
+      record ⟦_∪_⟧ {s/◭ s/◮} (◭ : Carrier s/◭) (◮ : Carrier s/◮) : Set where
+        constructor ⟪_,_,_⟫
+        field
+          {s/▲} : Nat
+          {▲} : Carrier s/▲
+          ◭⊆▲ : ◭ ⊆ ▲
+          ◮⊆▲ : ◮ ⊆ ▲
+          ▲⊆◭∪◮ : ∀ {k} → k ∈ ▲ → Either (k ∈ ◭) (k ∈ ◮)
+
+      [_∪_] : ∀ {s/◭ s/◮} (◭ : Carrier s/◭) (◮ : Carrier s/◮) → Dec ⟦ ◭ ∪ ◮ ⟧
+      [_∪_] {0} ◭ ◮ = {!!}
+      [_∪_] {suc s/◭₋ₐ} ◭ ◮ =
+        case choose ◭ of λ where
+          (yes (a , a∈◭)) →
+            case pick a∈◭ of λ where
+              (◭₋ₐ , ◭₋ₐ⊆◭ , a∉◭₋ₐ) →
+                case a ∈? ◮ of λ where
+                  (no a∉◮) →
+                    case put (get a∈◭) a∉◮ of λ where
+                      (◮₊ₐ , a∈◮₊ₐ , ◮₊ₐᵃ=◭ᵃ , ◮⊆◮₊ₐ) →
+                        case [ ◭₋ₐ ∪ ◮₊ₐ ] of λ where
+                          (yes ⟪ ◭₋ₐ⊆▲ , ◮₊ₐ⊆▲ , ▲⊆◭₋ₐ∪◮₊ₐ ⟫) →
+                            yes
+                            record
+                            { ◭⊆▲ =
+                              λ {𝑘} 𝑘∈◭ →
+                              case 𝑘 == a of λ where
+                                (yes 𝑘≡a) →
+                                  reright 𝑘≡a λ _ →
+                                    case ◮₊ₐ⊆▲ a∈◮₊ₐ of λ where
+                                      (a∈▲ , ◮₊ₐᵃ=▲ᵃ) →
+                                        a∈▲ ,
+                                        (get-is-unique ⟨≡⟩ ◮₊ₐᵃ=◭ᵃ ʳ⟨≡⟩ ◮₊ₐᵃ=▲ᵃ)
+                                (no 𝑘≢a) → {!!}
+                            ; ◮⊆▲ = {!!}
+                            ; ▲⊆◭∪◮ = {!!} }
+                          (no ∄◭₋ₐ∪◮₊ₐ) → {!!}
+                  (yes a∈◮) → {!!}
+          (no ◭ᵃ≠◮ᵃ) → {!!}
+
   module FailingCases where
     postulate
       A₀ : Set
@@ -420,35 +518,4 @@ module Reright where
     test₁ v k k∈putkv∅ = let p = (put {k₀ = k} v {m₁ = ∅} ∅-is-empty) in let r = sym (snd $ snd p) in reright r {!!}
 
 {- expected.out
-?0 : b₀² ≡ b₀² → Set
-?1 : (b : B₀) → b ≡ b
-?2 : B₀ → B₀
-?3 : B₀ → B₀
-?4 : Y ≡ Y
-?5 : A₂ 𝑨₀² a₁𝑨₀²
-?6 : (a₁ : A₁ a₀²) → a₀² ≡ a₀² → F (A₂ a₀² a₁) → F (A₁ a₀²) ≡ A₂ a₀² a₁
-?7 : A₂ a₀ a₁a₀²
-?8 : F (A₁ a₀²) → F (A₁ a₀²) ≡ F (F (A₁ a₀²))
-?9 : F (A₁ a₀²) → F (A₁ a₀²) ≡ F (F (A₁ a₀²))
-?10 : C lzero (χ ⊔ β) (A₁ a₀²) →
-Nat →
-Σ Level
-(λ γ → C lzero (χ ⊔ β) (A₁ a₀²) ≡ C γ (χ ⊔ β) (C lzero γ (A₁ a₀¹)))
-?11 : F (A₁ a₀)
-?12 : F (F (F (F (A₁ a₀))))
-?13 : C lzero (l a₀¹ β) (A₁ a₀²) →
-Σ Level
-(λ γ →
-   C lzero (l a₀¹ β) (A₁ a₀²) ≡ C γ (l a₀¹ β) (C lzero γ (A₁ a₀¹)))
-?14 : K₀ a₀² → Set
-?15 : K₀ a₀² → F (K₀ a₀²) → F (F (K₀ a₀²)) ≡ F (K₀ a₀²)
-?16 : (A₀ → A₂ a₀² a₁a₀²-2 ≡ A₂ a₀² a₁a₀²-2) →
-A₂ a₀² a₁a₀²-2 ≡ A₂ a₀² a₁a₀²-3
-?17 : Set
-?18 : Set
-?19 : Set
-?20 : Set
-?21 : (k ∉ fst (put (get (fst (snd (put v ∅-is-empty)))) ∅-is-empty) →
- ⊥) →
-Set
 -}
