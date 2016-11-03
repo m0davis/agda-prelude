@@ -12,6 +12,7 @@ open import Prelude.Memoization
 open import Prelude.Equality.Memoized
 open import Prelude.Nat.Memoized
 open import Tactic.Reflection.Equality.Memoized
+--open import Prelude.List.Memoized
 
 private
 
@@ -30,6 +31,15 @@ private
   Natμ : (n : Nat) → Mem n
   Natμ zero = putμ refl
   Natμ (suc n) = case Natμ n of λ { (putμ n-refl) → putμ (cong suc n-refl) }
+
+  Listμ : ∀ {a} {A : Set a} → (l : List A) → Mem l
+  Listμ [] = putμ refl
+  Listμ (x ∷ xs) = case Listμ xs of λ { (putμ xs-refl) → putμ (cong₂ _∷_ refl xs-refl) }
+
+  ListNatμ : (l : List Nat) → Mem l
+  ListNatμ [] = putμ refl
+  ListNatμ (x ∷ xs) = case Natμ x of λ { (putμ x-refl) → case Listμ xs of λ { (putμ xs-refl) → putμ (cong₂ _∷_ x-refl xs-refl) } }
+
 
   mutual
     Termμ : (t : Term) → Mem t
